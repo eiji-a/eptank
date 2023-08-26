@@ -1,0 +1,22 @@
+---
+database:
+  host: localhost
+  user: redforest13
+  pass: akaei8190
+  port: 3306
+  name: eptank
+  charset: utf8mb4
+
+eptank:
+  dir: /home/eiji/mnt/edata/epic/
+
+pixiv:
+  id: akagi.eiji.us@gmail.com
+  pw: akagieiji00
+  user: 97368061
+patreon:
+  id: akagi.eiji@gmail.com
+  pw: 
+
+
+
