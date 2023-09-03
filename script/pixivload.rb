@@ -26,40 +26,71 @@ PIXIVARTISTOPT = '/illustrations/'
 PIXIVOPEID     = '11'
 PIXIVMAXPOST   = 50
 PIXIVMAXPAGE   = 100
-PIXIVSELECT    = [
-  91191937,  # MAIK09 (UP画像多数、無修正)
-  88129804,  # DeepFlowAI (超リアル)
-  57876684,  # WetLady （乳集団）
-  34361103,  # DryAI (超リアル)
-  1244958,   # Maitake (超リアル)
-  96329393,  # armpitmania2 （綺麗なお姉さん、腋）
-  97079130,  # coco （リアル系イラスト、乳綺麗）
-  13979832,  # AI OFUG （リアルお姉さん）
-  92621256,  # eroai （超綺麗なヌード）
-  74032681,  # Zeroling91 （エロ乳お姉さん）
-  91897081,  # MACHOKING （お姉さんヌード、股多い）
-  2068607,   # satankun  （調乳娘）
-  6046076,   # StudioZue （お股多い可愛い系イラスト）
-  49365915,  # nanairo52 （超リアルのお姉さんヌード）
-  140507,    # rei25 (超リアル、年増あり)
-  92629620,  # momiji0920@AI （リアルお姉さん）
-  94484133,  # AI Artmage （リアルお姉さん）
-  93842479,  # re-fan （リアルお姉さん）
-  87784294,  # CudaSmoke （美女！）
-  2094820,   # SDI （リアルお姉さん）
-  91598121,  # さんなり （リアルお姉さん、今後に期待）
-  90748889,  # AIbot （綺麗系巨乳）
-  #4090481,   # AkaTsuki
-  #92200178,  # Harui
-  #18866024,  # 鸽鸽下面羊死了
-  #36972434,  # Kote_party
 
-  #94624609,  # AI_Engine
-  #94077908,  # SUNNY
-  #92650235,  # ai_sakura
-  #95912810,  # MIA
-  #92580782,  # AI Beauty
-]
+PIXIVSELECT    = {
+  '94953388'  => 'HAL-sexyグラドル部',
+  #'92580782'  => 'AI Beauty',
+  '94293536'  => 'AI Harem',
+  '91987609'  => 'Ai_pyramid',
+
+
+}
+
+PIXIVSELECT2    = {
+  '92580782'  => 'AI Beauty',
+  '94624609'  => 'AI_Engine',
+  '14732050'  => 'AI_Factory',
+  '94293536'  => 'AI Harem',
+  '92674085'  => 'AI hentai girl',
+  '91987609'  => 'Ai_pyramid',
+  '91993460'  => 'AI美女図鑑',
+  '4090481'   => 'AkaTsuki',
+  '86628914'  => 'aksen',
+  '92471431'  => 'ApaDepa',
+  '96329393'  => 'armpitmania2',  #  （綺麗なお姉さん、腋）
+  '91659277'  => 'Beautiful Asian',
+  '93710453'  => 'Chama',
+  '92083772'  => 'CTR57',
+  '88129804'  => 'DeepFlowAI',  # 超リアル
+  '34361103'  => 'DryAI',  #  (超リアル)
+  '92543253'  => 'ENA IZUMI',
+  '1081940'   => 'EPW',
+  '92621256'  => 'eroai', #（超綺麗なヌード）
+  '92200178'  => 'Harui',
+  '94953388'  => 'HAL-sexyグラドル部',
+  '94472057'  => 'HouseOfGirls',
+  '93236095'  => 'JKBOX',
+  '92374415'  => 'LAIKA',
+  '91897081'  => 'MACHOKING', #（お姉さんヌード、股多い）
+  '92842827'  => 'MACHUWA',
+  '1244958'   => 'Maitake',   #  (超リアル)
+  '95912810'  => 'MIA',
+  '85958675'  => 'MJ-Warrior',
+  '49365915'  => 'nanairo52', #（超リアルのお姉さんヌード）
+  '15006443'  => 'OG',
+  '93272957'  => 'PinkKirby',
+  '92827046'  => 'PIXAIAN',
+  '93842479'  => 're-fan', #（リアルお姉さん）
+  '91956444'  => 'realis_g',
+  '140507'    => 'rei25',
+  '34103660'  => 'RTA',
+  '81519445'  => 'SANA666',
+  '91430750'  => 'Sanity',
+  '2094820'   => 'SDI',
+  '824773'    => 'sistaelephants',  # ノースリーブ
+  '91848683'  => 'StTsubasa',
+  '94077908'  => 'SUNNY',
+  '57876684'  => 'WetLady',  #  （乳集団）
+  '91847721'  => '【AIイラスト】akane',
+  '90760370'  => 'あい',
+  '91598121'  => 'さんなり', # （リアルお姉さん、今後に期待）
+  '1579615'   => 'したの',
+  '42628079'  => 'だっちゅーの@AI-art',
+  '94104308'  => '野魄',
+  '64837766'  => '破廉恥太郎(ハレンチタロウ)',
+
+
+}
 
 # Patreon
 # AIART                  10 -> 0    生々しくエロいがアソコがリアルじゃない
@@ -76,14 +107,14 @@ PIXIVSELECT    = [
 # Lote.                  8 -> 0     ありきたり
 # ozin007                6
 # PinkKirby              5
-# realis_g               5 -> 0     画像がほとんどなかった、取得できなかった
+# realis_g               5 -> 0     link available!!
 # studio Zue             5 -> 0     モザイクあり、残念
 # unclear                7 -> 0     アソコがリアルじゃない
 
 MAXARTISTLINE = 25
 MAXIMG = 1000
-MAXPOST = 2
-MAXPOSTARTIST = 2
+#MAXPOST = 1
+#MAXPOSTARTIST = 1
 MAXWAIT = 5          # wait seconds for page navigation
 
 def init
@@ -94,6 +125,7 @@ def init
 
   $PARAM = load_config(ARGV[0])
 
+  @db = EpTank.new($PARAM['database'])
   @session = WebSession.new(WebSession::WITHSCR)
   
   # 初期ページ
@@ -104,12 +136,12 @@ def init
   # 「同意」ボタンを押す（特別な時だけ？）
   #link = @session.find_element(:xpath, '//*[@id="js-privacy-policy-banner"]/div/div/button')
   #link.click
-  @session.click('//*[@id="js-privacy-policy-banner"]/div/div/button')
+  @session.click('//*[@id="js-privacy-policy-banner"]/div/div/button', 2)
 
   #sleep MAXWAIT
   #link = @session.find_element(:xpath, '/html/body/div[2]/div/div/div[3]/div[1]/a[2]')
   #link.click
-  @session.click('/html/body/div[2]/div/div/div[3]/div[1]/a[2]')
+  @session.click('/html/body/div[2]/div/div/div[3]/div[1]/a[2]', 2)
 
   # ログイン
   #sleep MAXWAIT
@@ -119,11 +151,11 @@ def init
 
   #ele_pass = @session.find_element(:xpath, '//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input')
   #ele_pass.send_keys($PARAM['pixiv']['pw'])
-  @session.send_keys($PARAM['pixiv']['pw'], '//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input', 0)
+  @session.send_keys($PARAM['pixiv']['pw'], '//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input')
 
   #link = @session.find_element(:xpath, '//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/button')
   #link.click
-  @session.click('//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/button', 0)
+  @session.click('//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/button')
 
   # サイドメニューを消す
   #sleep 60
@@ -134,8 +166,7 @@ def init
   #uid = session.find_element(:xpath, '/html/body/span[1]')
   #STDERR.puts "USER ID: #{uid.tag_name}, #{uid.text}" if DEBUG
 
-  post_id = ARGV[1]
-  return post_id
+  return ARGV[1]
 end
 
 =begin
@@ -174,6 +205,7 @@ def create_db(dbfile)
 end
 =end
 
+=begin
 def exist_post?(url)
   cnt = 0
   begin
@@ -224,6 +256,7 @@ def read_artist
     st = @db.prepare(sql)
     st.execute(PIXIVSITEID).each do |uid, unm|
         @artists[uid] = unm
+        STDERR.puts "UID/UNM: #{uid}/#{unm}" if DEBUG
     end
   rescue => e
     STDERR.puts "READ ARTIST ERROR: #{e}"
@@ -360,6 +393,7 @@ end
 def close_db
   @db.close
 end
+=end
 
 #-------------------
 #  POST DOWNLOAD
@@ -391,7 +425,42 @@ def load_image(artist_id, prefix, date, imgfile, post_id)
         fp.write(body)
       end
     end
-    regist_image(fname, post_id, artist_id)
+    @db.regist_image(fname, post_id, artist_id)
+    succ = true
+  rescue => e
+    STDERR.puts "LOAD ERROR: #{e}" if DEBUG
+    succ = false
+  end
+  succ
+end  
+
+def load_image2(url, prefix, artist_id, post_id)
+  if File.exist?($PARAM['eptank']['dir']) == false
+    STDERR.puts "DL DIR ISN'T EXIST: #{$PARAM['eptank']['dir']}"
+    return false
+  end
+  STDERR.puts "URL: #{url}" if DEBUG
+  charset = nil
+  succ = false
+  begin
+    body = URI.open(url, "User-Agent" => UA, :read_timeout => TIMEOUT, "Referer" => PIXIVHOST) do |f|
+      charset = f.charset
+      f.read
+    end
+    dldir = "#{$PARAM['eptank']['dir']}#{@artists[artist_id]}"
+    if File.exist?(dldir) == false
+      FileUtils.mkdir(dldir)
+    end
+    imgfile = url.split("/")[-1]
+    fname = "#{@artists[artist_id]}/#{prefix}-#{imgfile}"
+    STDERR.puts "DL FILE: #{fname}" if DEBUG
+
+    if body != ""
+      File.open($PARAM['eptank']['dir'] + fname, 'w') do |fp|
+        fp.write(body)
+      end
+    end
+    @db.regist_image(fname, post_id, artist_id)
     succ = true
   rescue => e
     STDERR.puts "LOAD ERROR: #{e}" if DEBUG
@@ -402,56 +471,68 @@ end
 
 def load_page_sel(post_id)
   purl = PIXIVPOSTURL + post_id
-  return 0 if exist_post?(purl)
-
+  return 0 if @db.exist_post?(purl)
   # 対象ページへ遷移
   #@session.navigate.to purl
-  @session.navigate purl
+  @session.navigate(purl, 3)
 
-  #sleep 5
-  #artisturl = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a')
-  #artist_id = artisturl.attribute('href').split("/")[-1]
-  artist_id = @session.attribute('href', '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a')[-1]
-  if @artists[artist_id] == nil
-    #eleartist = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a/div')
-    #artist_nm = eleartist.text
-    artist_nm = @session.text('//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a/div', 0)
-    update_db_artists({artist_id => artist_nm})
-    @artists[artist_id] = artist_nm
+  begin
+    #artisturl = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a')
+    #artist_id = artisturl.attribute('href').split("/")[-1]
+    artist_id = @session.attribute('href', '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a').split("/")[-1]
+    if @artists[artist_id] == nil
+      #eleartist = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a/div')
+      #artist_nm = eleartist.text
+      artist_nm = @session.text('//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/aside/section[1]/h2/div/div/a/div', 0)
+      @db.update_artists({artist_id => artist_nm})
+      @artists[artist_id] = artist_nm
+    end
+  rescue => e
+    STDERR.puts "LPS ERROR: #{e}"
   end
-  sleep 1
+
   title = 'NO TITLE'
   begin
     #eletitle  = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figcaption/div/div/h1')
     #title     = eletitle.text
-    title = @session.text('//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figcaption/div/div/h1')
+    title = @session.text('//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figcaption/div/div/h1', 0)
   rescue => e
     STDERR.puts "NO TITLE: #{post_id}" if DEBUG
   end
 
   #element = nil
-  html = nil
+  image_urls = Array.new
   begin
-    image_xpath = nil
     begin
       # "すべて見る"ボタンをクリック
       #link = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/div[4]/div/div[2]/button/div[2]')
       #link.click
-      @session.click('//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/div[4]/div/div[2]/button/div[2]')
+      @session.click('//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/div[4]/div/div[2]/button/div[2]', 0)
 
-      #sleep 5
+      #sleep 3
       #element = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div[2]/div[2]/a')
-      image_xpath = '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div[2]/div[2]/a'
-    rescue
+      #image_xpath = '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div[2]/div[2]/a'
+
+      # for test
+      elems = @session.elements('//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div/div[2]/a', 3)
+      elems.each do |e|
+        image_urls << e.attribute('href')
+      end
+    rescue => e
+      # STDERR.puts "SINGLE IMAGE?: #{e}"
+
       #element = @session.find_element(:xpath, '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div[1]/div/a')
-      image_xpath = '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div[1]/div/a'
+      #image_xpath = '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div[1]/div/a'
+      
+      image_urls << @session.attribute('href', '//*[@id="root"]/div[2]/div/div[3]/div/div/div[1]/main/section/div[1]/div/figure/div[1]/div[1]/div/a', 0)
     end
-    html = @session.attribute('href', image_xpath)
+    #html = @session.attribute('href', image_xpath)
   rescue => e
     STDERR.puts "PAGE NOT IMAGE?: #{e}" if DEBUG
     return 0
   end
 
+=begin
   #html = element.attribute('href')
   STDERR.puts "HREF: #{html}" if DEBUG
   html =~ /img-original\/img(\/\d\d\d\d\/\d\d\/\d\d\/\d\d\/\d\d\/\d\d\/)#{post_id}_p\d+\.(\S+)$/
@@ -467,8 +548,17 @@ def load_page_sel(post_id)
     break unless load_image(artist_id, prefix, date, imgfile, post_id)
     nimg += 1
   end
+=end
+
+  prefix = Time.now.strftime("%Y%m%d%H%M%S%L") + "-#{artist_id}"
+  nimg = 0
+  image_urls.each do |u|
+    next unless load_image2(u, prefix, artist_id, post_id)
+    nimg += 1
+  end
+
   if nimg > 0
-    regist_post(title, artist_id, purl, date, ext, nimg)
+    @db.regist_post(title, artist_id, purl, '', '', nimg)
   end
   nimg
 end
@@ -495,13 +585,14 @@ def update_artists
         begin
           #artist = @session.find_element(:xpath, "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[2]/div[2]/div/section/div[2]/div[#{al+1}]/div/div[1]/div/a")
           #artist_id = artist.attribute('href').split("/")[-1]
-          artist_id = @session.attribute('href', "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[2]/div[2]/div/section/div[2]/div[#{al+1}]/div/div[1]/div/a")[-1]
+          artist_id = @session.attribute('href', "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[2]/div[2]/div/section/div[2]/div[#{al+1}]/div/div[1]/div/a", 0).split("/")[-1]
 
           #artist_name = @session.find_element(:xpath, "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[2]/div[2]/div/section/div[2]/div[#{al+1}]/div/div[1]/div/div/div[1]/a").text
-          artist_name = @session.text("//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[2]/div[2]/div/section/div[2]/div[#{al+1}]/div/div[1]/div/div/div[1]/a")
+          artist_name = @session.text("//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[2]/div[2]/div/section/div[2]/div[#{al+1}]/div/div[1]/div/div/div[1]/a", 0)
 
           curr_artists[artist_id] = artist_name
           STDERR.puts "ARTIST: #{artist_id} / #{artist_name} (#{p})" if DEBUG
+
         rescue => e
           STDERR.puts "MAXLINE: #{al} / #{e}" if DEBUG
           break
@@ -513,10 +604,10 @@ def update_artists
 
     #nextbutton = @session.find_elements(:xpath, "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/nav/a")[-1]
     nextbutton = @session.element_nth("//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/nav/a", -1)
+    STDERR.puts "NEXT BUTTON: #{nextbutton.class}" if DEBUG
 
     break if nextbutton.attribute('hidden') == 'true'
-    nextbutton.click
-    #sleep MAXWAIT
+    @session.click(nextbutton, 3)
   end
 
   diff_artists = Hash.new
@@ -536,7 +627,7 @@ def update_artists
     STDERR.puts "DELETE ARTIST: #{a} / #{n}"
   end
 
-  update_db_artists(diff_artists)
+  @db.update_artists(diff_artists)
 end
 
 def select_posts
@@ -544,7 +635,7 @@ def select_posts
   npost = 0
   @artists.keys.shuffle.each do |artist_id|
     next if artist_id == PIXIVOPEID # IDがPIXIV事務局ならスキップ
-    break if npost >= MAXPOST
+    break if npost >= $PARAM['pixiv']['maxpost']
 
     STDERR.puts "ARTISTID: #{artist_id}" if DEBUG
     #@session.navigate.to "#{PIXIVARTISTURL}#{artist_id}"
@@ -561,41 +652,49 @@ def select_posts
       STDERR.puts "CLICK ERROR: #{e}"
     end
 =end
+
     pcount = 0 # アーティスト毎の取得ポスト数
     loop do
-      break if npost >= MAXPOST || pcount >= MAXPOSTARTIST
+      break if npost >= $PARAM['pixiv']['maxpost'] || pcount >= $PARAM['pixiv']['maxpostartist']
       PIXIVMAXPOST.times do |i|
-        break if npost >= MAXPOST || pcount >= MAXPOSTARTIST
+        break if npost >= $PARAM['pixiv']['maxpost'] || pcount >= $PARAM['pixiv']['maxpostartist']
         begin
           #element = @session.find_element(:xpath, "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[3]/div/div/section/div[3]/div/ul/li[#{i+1}]/div/div[1]/div/a")
           #post_id = element.attribute('href').split("/")[-1]
           #purl = PIXIVPOSTURL + post_id
-          purl = @session.attribute('href', "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[3]/div/div/section/div[3]/div/ul/li[#{i+1}]/div/div[1]/div/a")
+          purl = @session.attribute('href', "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/div[3]/div/div/section/div[3]/div/ul/li[#{i+1}]/div/div[1]/div/a", 0)
           post_id = purl.split("/")[-1]
-          unless exist_post?(purl)
+          STDERR.puts "POST: #{post_id}"
+          unless @db.exist_post?(purl)
             STDERR.puts "POSTID: #{post_id}/#{artist_id}"
             post_list << post_id
             npost += 1
             pcount += 1
           end
         rescue => e
+          # 最初のリンクが取れなければアーティストが削除された
+          break if i == 0
+
           STDERR.puts "PAGEID: ELEMENT IS NIL: #{e}" if DEBUG
           STDERR.puts "ARTIST MAY NOT BE DISABLED: artist=#{artist_id}/post=#{post_id}" if post_id == nil
-          pcount = MAXPOSTARTIST
+          #pcount = $PARAM['pixiv']['maxpostartist'] if i >= PIXIVMAXPOST - 1
         end
       end
 
       begin
+        break if pcount >= $PARAM['pixiv']['maxpostartist']
+
         # アーティスト取得ポスト数に満たないなら次ページへ
-        break if pcount >= MAXPOSTARTIST
-
         #nextbutton = @session.find_elements(:xpath, "//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/nav/a")[-1]
-        nextbutton = @session.element_nth("//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/nav/a", -1)
+        nextbutton = @session.element_nth("//*[@id=\"root\"]/div[2]/div/div[3]/div/div/div[2]/nav/a", -1, 2)
 
-        break if nextbutton.attribute('hidden') == 'true'
         # 最終ページならbreak
+        break if nextbutton == nil
+        break if nextbutton.attribute('hidden') == 'true'
+
+        STDERR.puts ("GO TO NEXT PAGE:")
         nextbutton.click
-        sleep MAXWAIT
+        sleep 3
       rescue => e
         STDERR.puts "NEXT PAGE ERROR: #{e}" if DEBUG
       end
@@ -606,30 +705,40 @@ def select_posts
 end
 
 def main
-  post_id = init
+  option = init
   begin
-    open_db
-    read_artist
-
-    if post_id != nil
-      nimage = load_page_sel(post_id)
-      STDERR.puts "#IMAGE: #{nimage} images are downloaded."
-    else
-      update_artists
+    nimage = 0
+    case option
+    when /\d+/ 
+      @artists = @db.read_artist
+      nimage = load_page_sel(option)
+    when 'select'
+      #@artists = PIXIVSELECT
+      @artists = $PARAM['pixiv']['select']
       posts = select_posts
-      nimage = 0
       posts.each_with_index do |post_id, i|
         STDERR.print "(#{i+1}/#{posts.size}) POST #{post_id}: "
         nimg = load_page_sel(post_id)
         STDERR.puts "#{nimg} images are downloaded"
         nimage += nimg
       end
-      STDERR.puts "#IMAGE: #{nimage} images are downloaded."
+    else
+      @artists = @db.read_artist
+      update_artists
+      posts = select_posts
+      posts.each_with_index do |post_id, i|
+        STDERR.print "(#{i+1}/#{posts.size}) POST #{post_id}: "
+        nimg = load_page_sel(post_id)
+        STDERR.puts "#{nimg} images are downloaded"
+        nimage += nimg
+      end
     end
+    STDERR.puts "TOTAL #IMAGE: #{nimage} images are downloaded."
   rescue => e
     STDERR.puts "ERROR: #{e}" if DEBUG
   ensure
-    close_db
+    @session.quit
+    @db.close if @db
   end
 end
 
