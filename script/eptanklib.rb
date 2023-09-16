@@ -16,18 +16,22 @@ class WebSession
   WAIT = 3
   TRY = 10
   PITCH = 0.5
+  UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
 
-  def initialize(headless = false)
+  def initialize(headless = false, profile = nil)
     @headless = headless
-    @session = if headless
-      options = Selenium::WebDriver::Chrome::Options.new
-      options.add_argument('--headless')
-      Selenium::WebDriver.for :chrome,options: options
-    else
-      Selenium::WebDriver.for :chrome
-    end
+
+    # cf: https://qiita.com/kawagoe6884/items/cea239681bdcffe31828
+    options = Selenium::WebDriver::Chrome::Options.new
+    options.add_argument('--headless') if headless
+    options.add_argument('--user-data-dir=/home/eiji/.config/google-chrome')
+    options.add_argument('--profile-directory=Default')
+    options.add_argument('--disable-blink-features=AutomationControlled')
+    @session = Selenium::WebDriver.for :chrome, options: options
+    #@session = Selenium::WebDriver.for :chrome, desired_capabilities: caps, http_client: Selenium::WebDriver::Remote::Http::Default.new
     @session.manage.window.maximize unless headless
     @wait = Selenium::WebDriver::Wait.new(:timeout => WAIT)
+    @session.execute_script('const newProto = navigator.__proto__;delete newProto.webdriver;navigator.__proto__ = newProto;')
   end
 
   def quit
@@ -37,6 +41,17 @@ class WebSession
   def navigate(url, wait = WAIT)
     @session.navigate.to url
     sleep wait
+  end
+
+  def add_cookie(cookie)
+    begin
+      @session.manage.add_cookie(cookie)
+    rescue => e
+    end
+  end
+
+  def all_cookies
+    @session.manage.all_cookies
   end
 
   def click(button, wait = WAIT)
@@ -137,6 +152,10 @@ class EpTank
     @db.commit
   end
 
+  def rollback
+    @db.rollback
+  end
+
   def exist_post?(url)
     cnt = 0
     begin
@@ -153,7 +172,9 @@ class EpTank
     cnt == 1
   end
   
-  def regist_post(title, artist_id, purl, post_time, ext, nimage)
+  def regist_post(site_id, title, artist_id, purl, post_time, ext, nimage)
+    rc = false
+    post_id = nil
     begin
       sql = <<-SQL
         SELECT artist.id FROM artist, enroll
@@ -169,15 +190,35 @@ class EpTank
         VALUES (?, ?, ?, ?, ?, ?, ?, ?);
       SQL
       st = @db.prepare(sql)
-      st.execute(title, purl, ext, nimage, post_time, true, PIXIVSITEID, aid)
-      @db.commit
+      st.execute(title, purl, ext, nimage, post_time, true, site_id, aid)
+      rc = true
+      sql = <<-SQL
+        SELECT id FROM article
+        WHERE url = ?;
+      SQL
+      st = @db.prepare(sql)
+      st.execute(purl).each do |a|
+        post_id = a[0]
+      end
     rescue => e
       STDERR.puts "REGIST POST ERROR: #{e}"
-      @db.rollback
+    end
+    return rc, post_id
+  end
+
+  def update_post(purl, nimage)
+    begin
+      sql = <<-SQL
+        UPDATE article SET nimage = ? WHERE url = ?;
+      SQL
+      st = @db.prepare(sql)
+      st.execute(nimage, purl)
+    rescue => e
+      STDERR.puts "UPDATE POST ERROR: #{e}"
     end
   end
 
-  def read_artist
+  def read_artist(site_id)
     artists = Hash.new
     begin
       sql = <<-SQL
@@ -185,7 +226,7 @@ class EpTank
         WHERE site_id = ? AND active = true;
       SQL
       st = @db.prepare(sql)
-      st.execute(PIXIVSITEID).each do |uid, unm|
+      st.execute(site_id).each do |uid, unm|
           artists[uid] = unm
           STDERR.puts "UID/UNM: #{uid}/#{unm}" if DEBUG
       end
@@ -216,28 +257,25 @@ class EpTank
 
   def update_artists(diff_artists)
     diff_artists.each do |k, v|
-      STDERR.puts "ARTIST: #{k}/#{v}" if DEBUG
+      STDERR.puts "ARTIST: #{k}/#{v.class}" if DEBUG
       begin
         ex, act = exist_artist?(k)
         if ex == true #
           if v == nil
-            if act == true
-              sql = <<-SQL
-                UPDATE enroll SET active = false WHERE userid = '?';
-              SQL
-              st = @db.prepare(sql)
-              st.execute(k)
-              @db.commit
-            end
+            STDERR.puts "ARTIST DELETE: #{k}"
+            sql = <<-SQL
+              UPDATE enroll SET active = false WHERE userid = ?;
+            SQL
+            st = @db.prepare(sql)
+            st.execute(k)
+            @db.commit
           else
-            if act == false
-              sql = <<-SQL
-                UPDATE enroll SET active = true WHERE userid = '?';
-              SQL
-              st = @db.prepare(sql)
-              st.execute(k)
-              @db.commit
-            end
+            sql = <<-SQL
+              UPDATE enroll SET active = true WHERE userid = ?;
+            SQL
+            st = @db.prepare(sql)
+            st.execute(k)
+            @db.commit
           end
         else
           if v != nil

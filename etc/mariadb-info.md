@@ -4,6 +4,8 @@
 
 $ mysql -h <host> -u <user> -P 3306 -p <dbname>
 
+ex) mysql -h 192.168.11.211 -u redforest13 -P 3306 -p eptank
+
 ## user
 
 1) root/!t...

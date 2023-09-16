@@ -8,114 +8,35 @@ require 'selenium-webdriver'
 require 'mysql'
 
 require_relative 'eptanklib'
-require_relative 'pixivlib'
+require_relative 'deviantartlib'
 
-USAGE = "pixivload.rb <YAML config> [<post id>]"
+USAGE = "deviantartload.rb <YAML config> [<post id>]"
 DEBUG = true
 TIMEOUT = 300
 #UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
 
-PIXIVSITEID    = 1
-PIXIVHOST      = 'https://www.pixiv.net/'
-PIXIVLOGIN     = 'https://accounts.pixiv.net/'
-PIXIVARTISTURL = PIXIVHOST + 'users/'
-PIXIVPOSTURL   = PIXIVHOST + 'artworks/'
-PIXIVIMGURL    = 'https://i.pximg.net/img-original/img'
-#PIXIVARTISTOPT = '/illustrations/R-18'
-PIXIVARTISTOPT = '/illustrations/'
-PIXIVOPEID     = '11'
-PIXIVMAXPOST   = 50
-PIXIVMAXPAGE   = 100
-
-PIXIVSELECT    = {
-  '94953388'  => 'HAL-sexyグラドル部',
-  #'92580782'  => 'AI Beauty',
-  '94293536'  => 'AI Harem',
-  '91987609'  => 'Ai_pyramid',
-
-
-}
-
-PIXIVSELECT2    = {
-  '92580782'  => 'AI Beauty',
-  '94624609'  => 'AI_Engine',
-  '14732050'  => 'AI_Factory',
-  '94293536'  => 'AI Harem',
-  '92674085'  => 'AI hentai girl',
-  '91987609'  => 'Ai_pyramid',
-  '91993460'  => 'AI美女図鑑',
-  '4090481'   => 'AkaTsuki',
-  '86628914'  => 'aksen',
-  '92471431'  => 'ApaDepa',
-  '96329393'  => 'armpitmania2',  #  （綺麗なお姉さん、腋）
-  '91659277'  => 'Beautiful Asian',
-  '93710453'  => 'Chama',
-  '92083772'  => 'CTR57',
-  '88129804'  => 'DeepFlowAI',  # 超リアル
-  '34361103'  => 'DryAI',  #  (超リアル)
-  '92543253'  => 'ENA IZUMI',
-  '1081940'   => 'EPW',
-  '92621256'  => 'eroai', #（超綺麗なヌード）
-  '92200178'  => 'Harui',
-  '94953388'  => 'HAL-sexyグラドル部',
-  '94472057'  => 'HouseOfGirls',
-  '93236095'  => 'JKBOX',
-  '92374415'  => 'LAIKA',
-  '91897081'  => 'MACHOKING', #（お姉さんヌード、股多い）
-  '92842827'  => 'MACHUWA',
-  '1244958'   => 'Maitake',   #  (超リアル)
-  '95912810'  => 'MIA',
-  '85958675'  => 'MJ-Warrior',
-  '49365915'  => 'nanairo52', #（超リアルのお姉さんヌード）
-  '15006443'  => 'OG',
-  '93272957'  => 'PinkKirby',
-  '92827046'  => 'PIXAIAN',
-  '93842479'  => 're-fan', #（リアルお姉さん）
-  '91956444'  => 'realis_g',
-  '140507'    => 'rei25',
-  '34103660'  => 'RTA',
-  '81519445'  => 'SANA666',
-  '91430750'  => 'Sanity',
-  '2094820'   => 'SDI',
-  '824773'    => 'sistaelephants',  # ノースリーブ
-  '91848683'  => 'StTsubasa',
-  '94077908'  => 'SUNNY',
-  '57876684'  => 'WetLady',  #  （乳集団）
-  '91847721'  => '【AIイラスト】akane',
-  '90760370'  => 'あい',
-  '91598121'  => 'さんなり', # （リアルお姉さん、今後に期待）
-  '1579615'   => 'したの',
-  '42628079'  => 'だっちゅーの@AI-art',
-  '94104308'  => '野魄',
-  '64837766'  => '破廉恥太郎(ハレンチタロウ)',
+DEVIANTSITEID    = 1
+DEVIANTHOST      = 'https://www.deviantart.com/'
+DEVIANTLOGIN     = 'https://www.deviantart.com/users/login'
+DEVIANTARTISTURL = DEVIANTHOST
+DEVIANTARTISTOPT = '/gallery/all'
+DEVIANTOPEID     = ''
+DEVIANTMAXPOST   = 50
+DEVIANTMAXPAGE   = 100
+COOKIECOMMON = {:path=>"/", :domain=>".deviantart.com", :same_site=>"Lax"}
+COOKIE = [
+  # change
+  {:name => 'td', :value => '7:872%3B12:876x927%3B20:880'},
+  {:name => 'userinfo', :expires => '2023-10-10T10:43:45.260Z', :value => '__c147632684c4826e4c02%3B%7B%22username%22%3A%22redforest13%22%2C%22uniqueid%22%3A%2267b3c5eecc3191a595f1980d76444515%22%2C%22dvs9-1%22%3A1%2C%22ab%22%3A%22tao-fdt-1-a-6%7Ctao-aan-1-b-6%22%7D'},
+  {:name => 'auth_secure', :value => '__9471423ee61667f006c5%3B%22085411209176d8455d64b69185e7737a%22', :http_only => false, :secure => false},
+  {:name => 'auth', :value => '__e201fcc1a7e87114a15b%3B%223377b5317e0ca3a81b068f13b73b259f%22', :secure => false},
+  {:name => 'pxcts', :value => '16dea05c-4fca-11ee-946d-d232b25d8db1'},
+  {:name => '_px', :value => 'UGPjgZMsxNBVE+bR5COR8a0WQWPRLWVAPONL1U54Y0FrFk8rAAQlM/l0NHttz8H0pM5l++v6IBGkTaCLHPsVuA==:1000:HwiKs6HMMyUJH07W3kjQ/IiI20BTArX6FnQl9o9BewLHYoTgvcdq6os5Uqq4iIkEfwPGIV2te7iZBWI0pn6DJYtCnZ+dboDHnIq4xjYGdDvMjkBZHBWlPYb3xs7gcvvV198U5LQVtvV12C/Cj5sxP4/3KzLAsklFmkqeIYmWQKhmhc62njsMGz5lElKsGzZ+LhXgNnjdkYLMDcQ6s4YUic52L7zGQYjShj0npHP4j1oi+9lhNRuz/SlVlTAoIFmR8mtdvdEF08yFDBb3pfIe9Q=='},
+  {:name => '_pxvid', :value => 'dd2e1e34-4fbb-11ee-b612-b266447164c3'},
+]
 
 
-}
-
-# Patreon
-# AIART                  10 -> 0    生々しくエロいがアソコがリアルじゃない
-# AI ENA IZUMI           5 -> 0     アソコがリアルじゃない
-# AI Factory             5 -> 0     えぐいが細部はあまり。。でもやっぱりいいのある
-# AI Porn Gravure Girls  10 -> 0    全部モザイクあり
-# AI_R18                 5
-# Asian Girl             6          超リアルお姉さん
-# Bukker                 ? -> ?     顔の比率が多い
-# Eroai                  7 -> 0     非常に綺麗だが当たり少ない（綺麗系はImagined...で）
-# GikoKitune             5          食傷気味
-# HAL-sexyグラドル部     30 -> 0    モザイクあり、残念
-# Imagined Cosplay       5
-# Lote.                  8 -> 0     ありきたり
-# ozin007                6
-# PinkKirby              5
-# realis_g               5 -> 0     link available!!
-# studio Zue             5 -> 0     モザイクあり、残念
-# unclear                7 -> 0     アソコがリアルじゃない
-
-MAXARTISTLINE = 25
-MAXIMG = 1000
-#MAXPOST = 1
-#MAXPOSTARTIST = 1
 MAXWAIT = 5          # wait seconds for page navigation
 
 def init
@@ -125,26 +46,42 @@ def init
   end
 
   $PARAM = load_config(ARGV[0])
+  $DEVIANT = $PARAM['deviantart']
 
   @db = EpTank.new($PARAM['database'])
   @session = WebSession.new(WebSession::WITHSCR, $PARAM['chromeprofile'])
   
   # 初期ページ
-  @session.navigate PIXIVLOGIN
+  #COOKIE.each do |c|
+  #  @session.add_cookie(c.merge(COOKIECOMMON))
+  #end
+  #@session.navigate(DEVIANTLOGIN)
+  @session.navigate(DEVIANTHOST)
+  #cookies = @session.all_cookies
+  #STDERR.puts "COOKIE: #{cookies}"
+  #cookies.each do |c|
+  #  @session.add_cookie(c)
+  #end
+
+  sleep 10
+  #exit 1
 
   # 「同意」ボタンを押す（特別な時だけ？）
-  begin
-    @session.click('//*[@id="js-privacy-policy-banner"]/div/div/button', 2)
-    # 「サインイン」ボタンを押す
-    @session.click('/html/body/div[2]/div/div/div[3]/div[1]/a[2]', 2)
+  #@session.click('//*[@id="js-privacy-policy-banner"]/div/div/button', 2)
+  # 「サインイン」ボタンを押す
+  #@session.click('/html/body/div[2]/div/div/div[3]/div[1]/a[2]', 2)
 
-    # ログイン
-    @session.send_keys($PARAM['pixiv']['id'], '//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[1]/label/input', 0)
-    @session.send_keys($PARAM['pixiv']['pw'], '//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/fieldset[2]/label/input', 0)
-    @session.click('//*[@id="app-mount-point"]/div/div/div[3]/div[1]/div[2]/div/div/div/form/button', 3)
-  rescue => e
-    STDERR.puts "LOGIN process is passed." if DEBUG
-  end
+  # ログイン
+  #@session.click('//*[@id="root"]/header/div[3]/a[2]', 3)
+  #@session.send_keys($DEVIANT['id'], '//*[@id="username"]', 0)
+  #@session.send_keys($DEVIANT['pw'], '//*[@id="password"]', 0)
+  #@session.click('//*[@id="loginbutton"]', 3)
+
+  sleep 30
+  #@session.all_cookies.each do |c|
+  #  next if c['name'] != 'auth'
+  #  STDERR.puts "AUTH: #{c}"
+  #end
 
   # サイドメニューを消す
   #sleep 60
@@ -172,7 +109,7 @@ def load_image(artist_id, prefix, date, imgfile, post_id)
   charset = nil
   succ = false
   begin
-    body = URI.open(url, "User-Agent" => UA, :read_timeout => TIMEOUT, "Referer" => PIXIVHOST) do |f|
+    body = URI.open(url, "User-Agent" => UA, :read_timeout => TIMEOUT, "Referer" => DEVIANTHOST) do |f|
       charset = f.charset
       f.read
     end
@@ -202,11 +139,10 @@ def load_image2(url, prefix, artist_id, post_id)
     STDERR.puts "DL DIR ISN'T EXIST: #{$PARAM['eptank']['dir']}"
     return false
   end
-  STDERR.puts "URL: #{url}" if DEBUG
   charset = nil
   succ = false
   begin
-    body = URI.open(url, "User-Agent" => UA, :read_timeout => TIMEOUT, "Referer" => PIXIVHOST) do |f|
+    body = URI.open(url, "User-Agent" => UA, :read_timeout => TIMEOUT, "Referer" => DEVIANTHOST) do |f|
       charset = f.charset
       f.read
     end
@@ -215,6 +151,11 @@ def load_image2(url, prefix, artist_id, post_id)
       FileUtils.mkdir(dldir)
     end
     imgfile = url.split("/")[-1]
+    imgfile = if imgfile =~ /\?/
+      imgfile.split("?")[0]
+    else
+      imgfile
+    end
     fname = "#{@artists[artist_id]}/#{prefix}-#{imgfile}"
     STDERR.puts "DL FILE: #{fname}" if DEBUG
 
@@ -232,27 +173,31 @@ def load_image2(url, prefix, artist_id, post_id)
   succ
 end  
 
-def load_page_sel(post_id)
-  purl = PIXIVPOSTURL + post_id
+def load_page_sel(purl)
   return 0 if @db.exist_post?(purl)
 
   artist_id, artist_nm, title, image_urls = getinfo_artwork(purl, @session)
-  return 0 if artist_id == nil
 
   if @artists[artist_id] == nil
     @db.update_artists({artist_id => artist_nm})
     @artists[artist_id] = artist_nm
   end
 
-  prefix = Time.now.strftime("%Y%m%d%H%M%S%L") + "-#{artist_id}"
   nimg = 0
+  rc, post_id = @db.regist_post(DEVIANTSITEID, title, artist_id, purl, '', '', nimg)
+  return 0 if rc == false
+
+  prefix = Time.now.strftime("%Y%m%d%H%M%S%L") + "-#{artist_id}"
   image_urls.each do |u|
     next unless load_image2(u, prefix, artist_id, post_id)
     nimg += 1
   end
 
   if nimg > 0
-    @db.regist_post(PIXIVSITEID, title, artist_id, purl, '', '', nimg)
+    @db.update_post(purl, nimg)
+    @db.commit
+  else
+    @db.rollback
   end
   nimg
 end
@@ -299,8 +244,7 @@ def select_news(urls, np)
     break if np == 0
     unless @db.exist_post?(u)
       STDERR.puts "POST URL: #{u}"
-      post_id = u.split("/")[-1]
-      plist << post_id
+      plist << u  # DeviantArtではページのURLをそのまま返す
       np -= 1
     end
   end
@@ -312,17 +256,28 @@ def select_posts
   npost = 0
 
   @artists.keys.shuffle.each do |artist_id|
-    next if artist_id == PIXIVOPEID # IDがPIXIV事務局ならスキップ
-    break if npost >= $PARAM['pixiv']['maxpost']
+    #next if artist_id == DEVIANTOPEID # IDがPIXIV事務局ならスキップ
+    ex, a = @db.exist_artist?(artist_id)
+    if ex == false
+      STDERR.puts "ARTIST ISN'T REGISTERED: #{artist_id}"
+      next
+    end
+    break if npost >= $DEVIANT['maxpost']
     pcount = 0
 
     STDERR.puts "ARTISTID: #{artist_id}" if DEBUG
-    article_urls, nextbutton = getinfo_illustration("#{PIXIVARTISTURL}#{artist_id}#{PIXIVARTISTOPT}?p=1", @session)
-    plist = select_news(article_urls, [$PARAM['pixiv']['maxpost'] - npost, $PARAM['pixiv']['maxpostartist'] - pcount].min)
+
+
+    article_urls, nextbutton = getinfo_illustration("#{DEVIANTARTISTURL}#{artist_id}#{DEVIANTARTISTOPT}", @session)
+    STDERR.puts "NARTICLES: #{article_urls.size}"
+
+    plist = select_news(article_urls, [$DEVIANT['maxpost'] - npost, $DEVIANT['maxpostartist'] - pcount].min)
     post_list += plist
     npost += plist.size
     pcount += plist.size
 
+=begin
+    # DeviantArtではページにわかれていない
     page = 1
     while npost < $PARAM['pixiv']['maxpost'] && pcount < $PARAM['pixiv']['maxpostartist'] && nextbutton != nil
       page += 1
@@ -332,8 +287,8 @@ def select_posts
       npost += plist.size
       pcount += plist.size
     end
+=end
   end
-
   post_list
 end
 
@@ -342,26 +297,22 @@ def main
   begin
     nimage = 0
     case option
-    when /\d+/ 
-      @artists = @db.read_artist(PIXIVSITEID)
-      nimg = load_page_sel(option)
     when 'select'
-      #@artists = PIXIVSELECT
-      @artists = $PARAM['pixiv']['select']
+      @artists = $DEVIANT['select']
       posts = select_posts
-      posts.each_with_index do |post_id, i|
-        STDERR.print "(#{i+1}/#{posts.size}) POST #{post_id}: "
-        nimg = load_page_sel(post_id)
+      posts.each_with_index do |post_url, i|
+        STDERR.print "(#{i+1}/#{posts.size}) POST #{post_url}: "
+        nimg = load_page_sel(post_url)
         STDERR.puts "#{nimg} images are downloaded"
         nimage += nimg
       end
+    when /\d+/ 
+      @artists = @db.read_artist
+      nimage = load_page_sel(option)
     else
-      @artists = @db.read_artist(PIXIVSITEID)
-      puts "STEP 1"
+      @artists = @db.read_artist
       update_artists
-      puts "STEP 2"
       posts = select_posts
-      puts "STEP 3"
       posts.each_with_index do |post_id, i|
         STDERR.print "(#{i+1}/#{posts.size}) POST #{post_id}: "
         nimg = load_page_sel(post_id)
