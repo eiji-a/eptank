@@ -25,13 +25,9 @@ def getinfo_artwork(url, session)
     # 画像をクリックして画像表示へ
     session.click('/html/body/div[1]/main/div/div[1]/div[1]/div/div/div[2]/img', 2)
     begin
-      u = session.attribute('src', '/html/body/div[5]/div/div/div/img')
-      STDERR.puts "IMG URL1=#{u}"
-      image_urls << u
+      image_urls << session.attribute('src', '/html/body/div[5]/div/div/div/img')
     rescue => e
-      u = session.attribute('src', '//*[@id="root"]/main/div/div[1]/div[1]/div/div/div[2]/img')
-      STDERR.puts "IMG URL2=#{u}"
-      image_urls << u
+      image_urls << session.attribute('src', '//*[@id="root"]/main/div/div[1]/div[1]/div/div/div[2]/img')
     end
   rescue => e
     STDERR.puts "PAGE NOT IMAGE?: #{e}" if DEBUG
@@ -44,17 +40,34 @@ end
 
 def getinfo_illustration(url, session)
   session.navigate url
-  sleep 10
+  sleep 3
 
   article_urls = Array.new
   begin
-    elems_link = session.elements('//*[@id="sub-folder-gallery"]/div/div[3]/div/div/div/div/div/div/a', 0)
-    #//*[@id="sub-folder-gallery"]/div/div[3]/div/div/div[1]/div/div[1]/div/a
-    #//*[@id="sub-folder-gallery"]/div/div[3]/div/div/div[1]/div/div[2]/div/a
-    #//*[@id="sub-folder-gallery"]/div/div[3]/div/div/div[1]/div/div[3]/div/a
-    elems_img  = session.elements('//*[@id="sub-folder-gallery"]/div/div[3]/div/div/div/div/div/div/a/div/img', 0)
+=begin
+    last_height = session.execute_script("return document.body.scrollHeight")
+    while true
+      1.step(last_height, last_height/10).each do |height|
+        session.execute_script("window.scrollTo(0,#{height})")
+      end
+      sleep 1
+      new_height = session.execute_script("return document.body.scrollHeight")
+      if new_height == last_height
+        break
+      end
+      last_height = new_height
+    end
+    sleep 20
+=end
+    # elems_link = session.elements('//*[@id="sub-folder-gallery"]/div/div[3]/div/div/div/div/div/div/a', 0) # OLD XPath
+    elems_link = session.elements('//*[@id="sub-folder-gallery"]/div/div[2]/div[2]/div/div/div/div/div/div/a', 0)
+    # elems_img  = session.elements('//*[@id="sub-folder-gallery"]/div/div[3]/div/div/div/div/div/div/a/div/img', 0) # OLD XPath
+    elems_img  = session.elements('//*[@id="sub-folder-gallery"]/div/div[2]/div[2]/div/div/div/div/div/div/a/div/img', 0)
     STDERR.puts "NIMGS: #{elems_img.size}/#{elems_link.size}"
     elems_link.zip(elems_img) do |li, im|
+      next if li == nil || im == nil
+      #STDERR.puts "ELE: #{li.attribute('href')}, #{im}"
+      STDERR.puts "UNLOCK!:#{im.attribute('src')}\nLINK: #{li.attribute('href')}" if im.attribute('src') =~ /blur_30/
       next if im.attribute('src') =~ /blur_30/
       article_urls << li.attribute('href')
     end

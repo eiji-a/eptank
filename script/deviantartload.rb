@@ -1,4 +1,10 @@
 !#/usr/bin/ruby
+#
+# 注意事項：スクレイピング対策がされているため、一旦Chromeからログインして記録を作っておく必要がある。
+#          (1) 次のディレクトリを削除する（~/.config/google-chrome/Defaults）
+#          (2) 一旦Chromeでログインする
+#          (3) 本スクリプトを実行する。
+
 
 require 'socket'
 require 'open-uri'
@@ -16,7 +22,7 @@ TIMEOUT = 300
 #UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
 UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
 
-DEVIANTSITEID    = 1
+DEVIANTSITEID    = 3
 DEVIANTHOST      = 'https://www.deviantart.com/'
 DEVIANTLOGIN     = 'https://www.deviantart.com/users/login'
 DEVIANTARTISTURL = DEVIANTHOST
@@ -62,9 +68,7 @@ def init
   #cookies.each do |c|
   #  @session.add_cookie(c)
   #end
-
-  sleep 10
-  #exit 1
+  sleep 20
 
   # 「同意」ボタンを押す（特別な時だけ？）
   #@session.click('//*[@id="js-privacy-policy-banner"]/div/div/button', 2)
@@ -77,7 +81,6 @@ def init
   #@session.send_keys($DEVIANT['pw'], '//*[@id="password"]', 0)
   #@session.click('//*[@id="loginbutton"]', 3)
 
-  sleep 30
   #@session.all_cookies.each do |c|
   #  next if c['name'] != 'auth'
   #  STDERR.puts "AUTH: #{c}"
@@ -264,11 +267,11 @@ def select_posts
     end
     break if npost >= $DEVIANT['maxpost']
     pcount = 0
-
+    page = 1
     STDERR.puts "ARTISTID: #{artist_id}" if DEBUG
 
 
-    article_urls, nextbutton = getinfo_illustration("#{DEVIANTARTISTURL}#{artist_id}#{DEVIANTARTISTOPT}", @session)
+    article_urls, nextbutton = getinfo_illustration("#{DEVIANTARTISTURL}#{artist_id}#{DEVIANTARTISTOPT}?page=#{page}", @session)
     STDERR.puts "NARTICLES: #{article_urls.size}"
 
     plist = select_news(article_urls, [$DEVIANT['maxpost'] - npost, $DEVIANT['maxpostartist'] - pcount].min)
@@ -298,7 +301,11 @@ def main
     nimage = 0
     case option
     when 'select'
-      @artists = $DEVIANT['select']
+      @artists = Hash.new
+      as = @db.read_artist(DEVIANTSITEID)
+      $DEVIANT['select'].each do |k, v|
+        @artists[k] = as[k] if as[k] != nil
+      end
       posts = select_posts
       posts.each_with_index do |post_url, i|
         STDERR.print "(#{i+1}/#{posts.size}) POST #{post_url}: "
@@ -307,11 +314,11 @@ def main
         nimage += nimg
       end
     when /\d+/ 
-      @artists = @db.read_artist
+      @artists = @db.read_artist(DEVIANTSITEID)
       nimage = load_page_sel(option)
     else
-      @artists = @db.read_artist
-      update_artists
+      @artists = @db.read_artist(DEVIANTSITEID)
+      #update_artists
       posts = select_posts
       posts.each_with_index do |post_id, i|
         STDERR.print "(#{i+1}/#{posts.size}) POST #{post_id}: "

@@ -123,6 +123,9 @@ class WebSession
     elem if elem != nil
   end
 
+  def execute_script(script)
+    @session.execute_script(script)
+  end
 end
 
 class EpTank
@@ -222,8 +225,10 @@ class EpTank
     artists = Hash.new
     begin
       sql = <<-SQL
-        SELECT userid, username FROM enroll
-        WHERE site_id = ? AND active = true;
+        SELECT userid, artist.name FROM enroll, artist
+        WHERE enroll.site_id = ?
+          AND enroll.active = true
+          AND artist.id = enroll.artist_id;
       SQL
       st = @db.prepare(sql)
       st.execute(site_id).each do |uid, unm|
