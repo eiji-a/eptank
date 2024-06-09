@@ -54,9 +54,8 @@ CREATE TABLE enroll (
 
 CREATE TABLE article (
   id INT(8) ZEROFILL AUTO_INCREMENT,
-  title VARCHAR(256),
+  title VARCHAR(1024),
   url VARCHAR(256),
-  ext VARCHAR(10),
   nimage SMALLINT UNSIGNED,
   optinfo VARCHAR(256),
   active BOOLEAN,
@@ -71,14 +70,16 @@ CREATE TABLE article (
 CREATE TABLE image (
   id INT(10) ZEROFILL AUTO_INCREMENT,
   filename VARCHAR(128),
+  filesize INT UNSIGNED,
+  format VARCHAR(32),
   fingerprint VARCHAR(1024),
   xreso SMALLINT UNSIGNED,
   yreso SMALLINT UNSIGNED,
-  filesize INT UNSIGNED,
   rating TINYINT UNSIGNED,
   active BOOLEAN,
   article_id INT(8) ZEROFILL,
   artist_id INT(6) ZEROFILL,
+  image_id INT(10) ZEROFILL,
   dl_date DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 );

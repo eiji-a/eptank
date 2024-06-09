@@ -4,6 +4,8 @@
 require 'yaml'
 require 'rubygems'
 require 'selenium-webdriver'
+require 'mysql'
+#require 'sequel'
 
 # CLASSES
 
@@ -17,7 +19,7 @@ class WebSession
   TRY = 10
   PITCH = 0.5
   UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-
+  
   def initialize(headless = false, profile = nil)
     @headless = headless
 
@@ -94,7 +96,8 @@ class WebSession
     #  end
     #end
     #@wait.until {elem.displayed?}
-    elem if elem != nil
+    #elem if elem != nil
+    elem
   end
 
   def elements(xpath, wait = WAIT)
@@ -136,9 +139,12 @@ class EpTank
       # parameters
       #  host, socket, port, connect_timeout, database, flags, charset, connect_attrs
       #  get_server_public_key
+      #url = "#{database['type']}://#{database['user']}:#{database['pass']}@#{database['host']}:#{database['port']}/" +
+      #      "#{database['name']}"
+      #@db = Sequel.connect(url, encoding: database['charset'])
       @db = Mysql.new(host:     database['host'], port:     database['port'],
                       username: database['user'], password: database['pass'],
-                      database: database['name'], charset:  database['charset'])
+                      database: database['name'], encoding:  database['charset'])
       @db.connect
       @db.autocommit(false)
     rescue => e
@@ -160,20 +166,38 @@ class EpTank
     @db.rollback
   end
 
+  def get_site_info(site)
+    i = 0
+    url = ""
+    begin
+      sql = <<-SQL
+        SELECT id, url FROM site WHERE name = ?;
+      SQL
+      st = @db.prepare(sql)
+      st.execute(site).each do |u|
+        i = u[0]
+        url = u[1]
+      end
+    rescue => e
+      STDERR.puts "DB ERROR(url=#{site}): #{e}"
+    end
+    return i, url
+  end
+
   def exist_article?(url)
-    cnt = 0
+    cnt = false
     begin
       sql = <<-SQL
         SELECT COUNT(id) FROM article WHERE url = ?;
       SQL
       st = @db.prepare(sql)
       st.execute(url).each do |c|
-        cnt = c[0]
+        cnt = c[0] >= 1
       end
     rescue => e
       STDERR.puts "DB ERROR: #{e}" if DEBUG
     end
-    cnt == 1
+    cnt == true
   end
   
   def regist_article(site_id, title, artist_id, purl, post_time, nimage)
@@ -210,6 +234,29 @@ class EpTank
     return rc, post_id
   end
 
+  def regist_article2(site_id, title, url, nimage, optinfo, artist_id)
+    return if exist_article?(url)
+    article_id = nil
+    begin
+      sql = <<-SQL
+        INSERT INTO article (title, url, nimage, optinfo, active, site_id, artist_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+      SQL
+      st = @db.prepare(sql)
+      st.execute(title, url, nimage, optinfo, true, site_id, artist_id)
+      sql = <<-SQL
+        SELECT LAST_INSERT_ID();
+      SQL
+      @db.query(sql).each do |r|
+        article_id = r[0] if r != nil
+      end
+    rescue StandardError => e
+      STDERR.puts "ERROR regist_article2: #{e}"
+      rollback
+    end
+    article_id
+  end
+
   def update_article(purl, nimage)
     begin
       sql = <<-SQL
@@ -234,12 +281,10 @@ class EpTank
       st = @db.prepare(sql)
       st.execute(site_id).each do |uid, unm|
           artists[uid] = unm
-          STDERR.puts "UID/UNM: #{uid}/#{unm}" if DEBUG
       end
     rescue => e
       STDERR.puts "READ ARTIST ERROR: #{e}"
     end
-    STDERR.puts "READ ARTIST: #{artists.size} artists!" if DEBUG
     artists
   end
 
@@ -319,6 +364,36 @@ class EpTank
       end
     end
   end
+
+  def add_artist(name, act)
+    aid = nil
+    act = false if act != true
+    begin
+      @db.query(<<-SQL
+        SELECT id FROM artist WHERE name = '#{name}';
+      SQL
+      ).each do |r|
+        aid = r[0]
+      end
+      if aid == nil  # アーティストが未登録
+        sql = <<-SQL
+          INSERT INTO artist (name, rating, active)
+          VALUES (?, ?, ?);
+        SQL
+        st = @db.prepare(sql)
+        st.execute(name, 0, act)
+        sql = <<-SQL
+          SELECT LAST_INSERT_ID();
+        SQL
+        @db.query(sql).each do |r|
+          aid = r[0] if r != nil
+        end
+      end
+    rescue => e
+      STDERR.puts "ERROR in add_artist: #{e}"
+    end
+    aid
+  end
   
   def regist_image(filename, format, post_id, artist_id)
     begin
@@ -354,6 +429,28 @@ class EpTank
     end  
   end
   
+  def regist_image2(filename, filesize, format, fingerprint, xreso, yreso, rating, article_id, artist_id, parent_id)
+    image_id = nil
+    begin
+      sql = <<-SQL
+        INSERT INTO image (filename, filesize, format, fingerprint, xreso, yreso, rating, active, article_id, artist_id, image_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, true, ?, ?, ?);
+      SQL
+      st = @db.prepare(sql)
+      st.execute(filename, filesize, format, fingerprint, xreso, yreso, rating, article_id, artist_id, parent_id)
+      sql = <<-SQL
+        SELECT LAST_INSERT_ID();
+      SQL
+      @db.query(sql).each do |r|
+        image_id = r[0] if r != nil
+      end
+    rescue StandardError => e
+      STDERR.puts "ERROR regist_image2: #{e}"
+      rollback
+    end
+    image_id
+  end
+
 end
 
 
@@ -369,5 +466,20 @@ def load_config(cfile)
   param
 end
 
+FPSIZE = 8
+CONV1 = "convert -filter Cubic -resize #{FPSIZE}x#{FPSIZE}! "
+CONV2 = " PPM:- | tail -c #{FPSIZE * FPSIZE * 3}"
+
+def get_image_info(image)
+  rs = `identify -format \"%w,%h\" '#{image}'`.split(",")
+  fsize = File.size(image)
+  fp = `#{CONV1} #{image} #{CONV2}`.unpack("H*")[0]
+  ext = File.extname(image).delete('.')
+  if $? == 0
+    [File.basename(image), fsize.to_i, ext, fp, rs[0].to_i, rs[1].to_i]
+  else
+    []
+  end
+end
 
 #---
