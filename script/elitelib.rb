@@ -45,6 +45,19 @@ def get_articles(session)
   articles
 end
 
+def get_modelinfo(url, session)
+  model = ''
+  session.navigate(url, 1)
+  begin
+    elem = session.element('//*[@id="content"]/p[2]/a[2]', 0)
+    model = elem.attribute('href')
+  rescue => e
+    elem = session.element('//*[@id="content"]/p[1]/a[2]', 0)
+    model = elem.attribute('href')
+  end
+  model
+end
+
 def get_models(url, session)
   session.navigate(url, 3)
   models = Array.new
@@ -59,20 +72,41 @@ def get_models(url, session)
   return models
 end
 
+def get_collection(url, session)
+  session.navigate(url, 3)
+  cols = Array.new
+  STDERR.puts "COLERR: #{cols.size} / #{url}"
+  begin
+    #elems = session.elements('//*[@id="content"]/ul/li/figure/a', 0)
+    elems = session.elements('/html/body/div/main/ul/li/figure/a', 0)
+    elems.each do |el|
+      cols << el.attribute('href')
+    end
+  rescue => e
+    STDERR.puts "get_collection: #{e}/#{url}"
+  end
+  cols
+end
+
 def check_tags(session)
-  scrape = true
+  elems = Array.new
   begin
     elems = session.elements('//*[@id="content"]/p/a', 0)
-    elems.each do |el|
-      #puts "TAG: #{el.text}"
-      if el.text == 'Ebony'
-        scrape = false
-        break
-      end
-      #scrape = true if el.text == 'Big Boobs'
-    end
+  rescue => e
+    STDERR.puts "check_tags(1): #{e}"
   end
-  scrape
+  elems.each do |el|
+    return false if el.text == 'Ebony'
+  end
+  begin
+    elems = session.elements('//*[@id="content"]/p[2]/a[2]', 0)
+  rescue => e
+    STDERR.puts "check_tags(2): #{e}"
+  end
+  elems.each do |el|
+    return false if el.text == 'Ebony'
+  end
+  true
 end
 
 def get_modelname(session)

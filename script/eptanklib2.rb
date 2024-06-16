@@ -306,6 +306,24 @@ class EpTank
     return cnt == 1, act
   end
 
+  def get_artist_from_article(url)
+    aid = nil
+    aurl = ''
+    begin
+      sql = <<-SQL
+        SELECT enroll.artist_id, enroll.url FROM enroll, article
+        WHERE article.url = '#{url}' AND enroll.artist_id = article.artist_id AND enroll.site_id = article.site_id;
+      SQL
+      @db.query(sql).each do |r|
+        aid = r[0]
+        aurl = r[1]
+      end
+    rescue => e
+      STDERR.puts "DB ERROR (get_artist_from_article): #{e}"
+    end
+    return aid, aurl
+  end
+
   def update_artists(diff_artists)
     diff_artists.each do |k, v|
       STDERR.puts "ARTIST: #{k}/#{v.class}" if DEBUG
@@ -365,12 +383,48 @@ class EpTank
     end
   end
 
-  def add_artist(name, act)
+  def enroll_artist(mname, mcode, act, site_id, artist_id, url)
+    sid = nil
+    aid = nil
+    stat = false
+    begin
+      @db.query(<<-SQL
+        SELECT site_id, artist_id FROM enroll WHERE site_id = #{site_id} AND artist_id = #{artist_id};
+      SQL
+      ).each do |r|
+        #STDERR.puts "ENROLL ENTRY: #{r}"
+        sid = r[0]
+        aid = r[1]
+      end
+    rescue => e
+      STDERR.puts "ERROR in enroll_artist(1): #{e}"
+      return stat
+    end
+
+    if sid == nil || aid == nil
+      sql = <<-SQL
+        INSERT INTO enroll (site_id, artist_id, userid, username, url, fee, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+      SQL
+      begin
+        st = @db.prepare(sql)
+        st.execute(site_id, artist_id, mcode, mname, url, 0, act)
+        stat = true
+      rescue => e
+        STDERR.puts "ERROR in enroll_artist(2): #{e}"
+      end
+    else
+      stat = true
+    end
+    stat
+  end
+
+  def add_artist(mname, mcode, act)
     aid = nil
     act = false if act != true
     begin
       @db.query(<<-SQL
-        SELECT id FROM artist WHERE name = '#{name}';
+        SELECT id FROM artist WHERE name = '#{mname}(#{mcode})';
       SQL
       ).each do |r|
         aid = r[0]
@@ -381,7 +435,7 @@ class EpTank
           VALUES (?, ?, ?);
         SQL
         st = @db.prepare(sql)
-        st.execute(name, 0, act)
+        st.execute("#{mname}(#{mcode})", 0, act)
         sql = <<-SQL
           SELECT LAST_INSERT_ID();
         SQL
@@ -467,13 +521,17 @@ def load_config(cfile)
 end
 
 FPSIZE = 8
-CONV1 = "convert -filter Cubic -resize #{FPSIZE}x#{FPSIZE}! "
-CONV2 = " PPM:- | tail -c #{FPSIZE * FPSIZE * 3}"
+# old command
+#CONV1 = "convert -filter Cubic -resize #{FPSIZE}x#{FPSIZE}! "
+#CONV2 = " PPM:- | tail -c #{FPSIZE * FPSIZE * 3}"
+# new command (IM7)
+CONVOPT = " -filter Cubic -resize #{FPSIZE}x#{FPSIZE}! PPM:- | tail -c #{FPSIZE * FPSIZE * 3}"
 
 def get_image_info(image)
   rs = `identify -format \"%w,%h\" '#{image}'`.split(",")
   fsize = File.size(image)
-  fp = `#{CONV1} #{image} #{CONV2}`.unpack("H*")[0]
+  #fp = `#{CONV1} #{image} #{CONV2}`.unpack("H*")[0]
+  fp = `magick #{image} #{CONVOPT}`.unpack("H*")[0]
   ext = File.extname(image).delete('.')
   if $? == 0
     [File.basename(image), fsize.to_i, ext, fp, rs[0].to_i, rs[1].to_i]

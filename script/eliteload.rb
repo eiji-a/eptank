@@ -13,12 +13,13 @@ require 'zip'
 require_relative 'eptanklib2'
 require_relative 'elitelib'
 
-USAGE = "eliteload.rb <YAML config> [<url of list>]"
+USAGE = "eliteload.rb <YAML config> [help|<selection>]"
 DEBUG = true
 TIMEOUT = 300
-MAXMODELPAGES = 10
+MAXCOLPAGES = 2  # 一覧ページを何ページまで走査するかを指定
+#MAXMODELPAGES = 1
 MAXARTICLES = 50
-MAXMODELARTICLES = 5
+MAXMODELARTICLES = 10
 RETRY = 20
 INFOFILE = '_info.txt'
 
@@ -30,19 +31,28 @@ def init
 
   $PARAM = load_config(ARGV[0])
 
+  if ARGV[1] == 'help'
+    STDERR.puts USAGE
+    STDERR.puts "SELECT: #{$PARAM['elite']['select'].keys.join('  ')}"
+    exit 1
+  end
+
   @db = EpTank.new($PARAM['database'])
   @session = WebSession.new(WebSession::WITHSCR, $PARAM['chromprofile'])
   @tankdir = "#{$PARAM['eptank']['dir']}#{$PARAM['elite']['site']}/"
   @tmpdir = $PARAM['eptank']['tmpdir']
 
   begin
-    STDERR.puts "SITE: #{$PARAM['elite']['select']}"
+    #STDERR.puts "SITE: #{$PARAM['elite']['select']}"
     @site_id, @site_url = @db.get_site_info($PARAM['elite']['site'])
-    STDERR.puts "ID|URL: #{@site_id}|#{@site_url}"
-    @topurl = @site_url + $PARAM['elite']['select']
+    #STDERR.puts "ID|URL: #{@site_id}|#{@site_url}"
+    selection = if ARGV.size == 2 && $PARAM['elite']['select'][ARGV[1]] != nil then ARGV[1] else 'models' end
+    @select = $PARAM['elite']['select'][selection]
   rescue => e
+    STDERR.puts "ERROR init: #{e}"
   end
 
+  #STDERR.puts "SEL: #{ARGV[1]} , #{@select}"
   return ARGV[1]
 
 end
@@ -118,15 +128,16 @@ end
 
 def scrape_article(url)
   images = []
+  chk = check_tags(@session)
+  return '', images if chk == false
   title, images = get_images(url, @session)
 
-  puts "TITLE: #{title}"
   return title, images
 end
 
 def regist_article(url, artist_id, mname, title, cbzfile, imginfo)
-  STDERR.puts "URL: #{url}"
-  STDERR.puts "MODEL: #{mname} (#{imginfo.size} images)"
+  #STDERR.puts "URL: #{url}"
+  #STDERR.puts "TITLE: #{title}"
   cbzpath = "#{$PARAM['elite']['site']}/#{mname}/"
   tankdir = "#{$PARAM['eptank']['dir']}"
   #regdir = "#{$PARAM['elite']['site']}/#{mname}/"
@@ -154,85 +165,157 @@ def regist_article(url, artist_id, mname, title, cbzfile, imginfo)
   end
 end
 
+def download_article(url, artist_id, mname, mcode)
+  modelname = "#{mname}(#{mcode})"
+  title = ''
+  images = []
+  begin
+    title, images = scrape_article(url)
+  rescue => e
+    STDERR.puts "dl ERROR: #{e}"
+    return false
+  end
+  return false if images.size == 0
+
+  if images[0] =~ /javascript/ || images.size < 5 
+    STDERR.puts "IMGVDO: #{images}"
+    @narticle -= 1
+    stat = false
+  else
+    cbzfile, imginfo = create_cbz(modelname, title, images)
+    regist_article(url, artist_id, modelname, title, cbzfile, imginfo)
+    STDERR.puts "#{mname}:#{artist_id} (#{imginfo.size} images): #{title}"
+  end
+  true
+end
+
 def scrape_modelpage(url, pg)
-  url = "#{url}/mpage/#{pg}/" if pg > 1
+  mcode = url.split("/")[-1]
+  url2 = "#{url}/mpage/#{pg}/"
   articles = Array.new
-  @session.navigate(url, 2)
+  @session.navigate(url2, 2)
   mname = ''
   begin
     chk = check_tags(@session)
     return '', [] if chk == false
 
-    mcode = url.split("/")[-1]
-    mname = get_modelname(@session) + "(#{mcode})"
+    mname = get_modelname(@session)
     ars0 = get_articles(@session)
   rescue => e
-    STDERR.puts "SCRAPE MODELPAGE ERROR: #{e}"
+    STDERR.puts "SCRAPE MODELPAGE ERROR: #{e}/#{url}"
   end
 
   ars0.each do |ar|
     break if @narticle >= MAXARTICLES
     break if @nmodelpage >= MAXMODELARTICLES
 
-    puts "AR: #{ar}"
+    #puts "AR: #{ar}"
     if @db.exist_article?(ar) || ar =~ /video/
-      STDERR.puts "The Article is already exist: #{ar}"
+      #STDERR.puts "The Article is already exist: #{ar}"
     else
       articles << ar
       @narticle += 1
       @nmodelpage += 1
     end
   end
+
   articles2 = []
   if @narticle < MAXARTICLES
-
-    #//*[@id="content"]/nav/ul/li[2]
-    #//*[@id="content"]/nav/ul/li[3]
-    #//*[@id="content"]/nav/ul/li[3]
     begin
       ele = @session.element('//*[@id="content"]/nav/ul/li[3]', 0)
-      if ele != nil
-        mn, articles2 = scrape_modelpage(url, pg + 1)
-      end
+      mn, mc, articles2 = scrape_modelpage(url, pg + 1) if ele != nil
     rescue StandardError => e
+      #STDERR.puts "scrape error: #{e}"
     end
   end
-  return mname, articles + articles2
+  return mname, mcode, articles + articles2
 end
 
 def scrape_models(url, page)
   models = []
-  return models if page > MAXMODELPAGES || page < 1
+  return models if page > MAXCOLPAGES || page < 1
 
-  url2 = "#{url}page/#{page}/"
+  #url2 = "#{url}page/#{page}/"
+  url2 = url.gsub('<PAGE>', page.to_s)
   models = get_models(url2, @session)
   nextmodels = scrape_models(url, page + 1)
 
   models + nextmodels
 end
 
+def scrape_collection(url, page)
+  models = Hash.new
+  return models if page > MAXCOLPAGES || page < 1
+
+  url2 = url.gsub('<PAGE>', page.to_s)
+  cols = get_collection(url2, @session)
+  STDERR.puts "PAGE=#{page}, SIZE=#{cols.size}"
+  return models if cols.size == 0
+
+  cols.each do |col|
+    next if col =~ /video/
+    aid, aurl = @db.get_artist_from_article(col)
+    model = if aid == nil then
+      STDERR.puts "NO EXIST: #{col}"
+      get_modelinfo(col, @session)
+    else
+      #STDERR.puts "USE ENROLL!: #{aurl}"
+      aurl
+    end
+    models[model] = true if model != ''
+    #STDERR.puts "MODEL: #{model}/#{col}"
+  end
+
+  nextmodels = scrape_collection(url, page + 1)
+
+  models.merge(nextmodels)
+end
+
 def main
   option = init
   @narticle = 0
   begin
-    models = scrape_models(@topurl, 1)
+    #STDERR.puts("scrape_collection: #{@select}")
+    models = case @select 
+      when /^models/
+        scrape_models(@site_url + @select, 1)
+      when /^tag/ || /^collection/
+
+        scrape_collection(@site_url + @select, 1).keys
+      else
+        scrape_collection(@site_url + @select, 1).keys
+      end
+
     puts "NMODELS: #{models.size}"
 
     models.shuffle.each do |mo|
       break if @narticle >= MAXARTICLES
       @nmodelpage = 0
-      mname, articles = scrape_modelpage(mo, 1)
-      artist_id = @db.add_artist(mname, true)
-      @db.commit if artist_id != nil
-      STDERR.puts "ARTIST: #{artist_id} / #{mname}"
+      mname, mcode, articles = scrape_modelpage(mo, 1)
+      STDERR.puts "MODELURL: #{mo}"
+      artist_id = @db.add_artist(mname, mcode, true)
+      st = @db.enroll_artist(mname, mcode, true, @site_id, artist_id, mo)
+      if artist_id != nil && st == true
+        @db.commit
+      else
+        next
+      end
+
+      modelname = "#{mname}(#{mcode})"
+      STDERR.puts "ARTIST: #{artist_id} / #{modelname}"
       articles.each do |ar|
+        STDERR.print "ARTICLE(#{@narticle}/#{MAXARTICLES}): "
+        st = download_article(ar, artist_id, mname, mcode)
+=begin
         title, images = scrape_article(ar)
         if images[0] =~ /javascript/ || images.size < 5 
           STDERR.puts "IMGVDO: #{images}"
         else
-          cbzfile, imginfo = create_cbz(mname, title, images)
-          regist_article(ar, artist_id, mname, title, cbzfile, imginfo)
+          cbzfile, imginfo = create_cbz(modelname, title, images)
+          regist_article(ar, artist_id, modelname, title, cbzfile, imginfo)
+          STDERR.puts "#{mname} (#{imginfo.size} images): #{title}"
         end
+=end
       end
     end
 
