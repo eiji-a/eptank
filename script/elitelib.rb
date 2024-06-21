@@ -34,8 +34,10 @@ end
 def get_articles(session)
   articles = Array.new
   begin
-    elems = session.elements('//*[@id="content"]/ul/li/figure/a', 0)
+    elems = session.elements('//*[@id="content"]/ul/li/figure/a[1]', 0)
+    #STDERR.puts "NELEMS: #{elems.size}"
     elems.each do |el|
+      #STDERR.puts "GA: #{el.attribute('href')}"
       articles << el.attribute('href')
     end
   rescue => e
@@ -75,16 +77,17 @@ end
 def get_collection(url, session)
   session.navigate(url, 3)
   cols = Array.new
-  STDERR.puts "COLERR: #{cols.size} / #{url}"
+  #STDERR.puts "COLERR: #{cols.size} / #{url}"
   begin
     #elems = session.elements('//*[@id="content"]/ul/li/figure/a', 0)
-    elems = session.elements('/html/body/div/main/ul/li/figure/a', 0)
+    elems = session.elements('/html/body/div/main/ul/li/figure/a[1]', 0)
     elems.each do |el|
       cols << el.attribute('href')
     end
   rescue => e
     STDERR.puts "get_collection: #{e}/#{url}"
   end
+  #STDERR.puts "COLERR: #{cols.size} / #{url}"
   cols
 end
 

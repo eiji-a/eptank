@@ -18,8 +18,8 @@ DEBUG = true
 TIMEOUT = 300
 MAXCOLPAGES = 2  # 一覧ページを何ページまで走査するかを指定
 #MAXMODELPAGES = 1
-MAXARTICLES = 50
-MAXMODELARTICLES = 10
+MAXARTICLES = 20
+MAXMODELARTICLES = 5
 RETRY = 20
 INFOFILE = '_info.txt'
 
@@ -38,7 +38,7 @@ def init
   end
 
   @db = EpTank.new($PARAM['database'])
-  @session = WebSession.new(WebSession::WITHSCR, $PARAM['chromprofile'])
+  @session = WebSession.new(WebSession::HEADLESS, $PARAM['chromprofile'])
   @tankdir = "#{$PARAM['eptank']['dir']}#{$PARAM['elite']['site']}/"
   @tmpdir = $PARAM['eptank']['tmpdir']
 
@@ -57,7 +57,7 @@ def init
 
 end
 
-def load_image(url)
+def get_imagedata(url)
   charset = nil
   #url2 = (URI.encode_www_form_component url).gsub("../", "")
   url2 = url
@@ -85,6 +85,16 @@ def load_image(url)
   end
 end
 
+def download_image(tmpfile, imgurl)
+  File.open(tmpfile, 'w') do |fp|
+    charset, body = get_imagedata(imgurl)
+    if body != nil
+      fp.write(body)
+    end
+  end
+  get_image_info(tmpfile)
+end
+
 def create_cbz(mname, title, images)
   return '', [] if images.size == 0
 
@@ -98,24 +108,34 @@ def create_cbz(mname, title, images)
     strdir = "#{@tankdir}#{mname}/"
     zipfile = dname + '.zip'
     Zip::File.open(@tmpdir + zipfile, Zip::File::CREATE) do |zfp|
-      File.open("#{@tmpdir}#{dname}/#{INFOFILE}", 'w') do |fp|
+      tmpdname = "#{@tmpdir}#{dname}"
+      File.open("#{tmpdname}/#{INFOFILE}", 'w') do |fp|
         fp.puts "model: #{mname}"
         fp.puts "title: #{title}"
       end
-      zfp.add(INFOFILE, "#{@tmpdir}#{dname}/#{INFOFILE}")
-      images.each do |im|
+      zfp.add(INFOFILE, "#{tmpdname}/#{INFOFILE}")
+
+      imglist = images.map do |im|
         fname = "#{bnum}-" + File.basename(im)
-        File.open("#{@tmpdir}#{dname}/#{fname}", 'w') do |fp|
-          charset, body = load_image(im)
-          if body != nil
-            fp.write(body)
-          end
-        end
-        info = get_image_info("#{@tmpdir}#{dname}/#{fname}")
-        #STDERR.puts "FNAME: #{info[0]}, FMT: #{info[2]}"
-        zfp.add(fname, "#{@tmpdir}#{dname}/#{fname}")
-        imginfo << info
+        tmpfile = "#{tmpdname}/#{fname}"
+        [fname, tmpfile, im]
       end
+      
+      threads = Array.new
+      imglist.each do |img|
+        threads << Thread.new(img) { |img|
+          download_image(img[1], img[2])
+        }
+      end
+
+      imginfo = Array.new
+      threads.each do |th|
+        imginfo << th.value
+      end
+      imglist.each do |i|
+        zfp.add(i[0], i[1])
+      end
+
     end
     FileUtils.mv("#{@tmpdir}#{zipfile}", "#{@tmpdir}#{dname}.cbz")
     FileUtils.rm_rf("#{@tmpdir}#{dname}")
@@ -127,6 +147,7 @@ def create_cbz(mname, title, images)
 end
 
 def scrape_article(url)
+  #STDERR.puts "URL: #{url}/#{url.class}"
   images = []
   chk = check_tags(@session)
   return '', images if chk == false
@@ -136,7 +157,6 @@ def scrape_article(url)
 end
 
 def regist_article(url, artist_id, mname, title, cbzfile, imginfo)
-  #STDERR.puts "URL: #{url}"
   #STDERR.puts "TITLE: #{title}"
   cbzpath = "#{$PARAM['elite']['site']}/#{mname}/"
   tankdir = "#{$PARAM['eptank']['dir']}"
@@ -172,7 +192,7 @@ def download_article(url, artist_id, mname, mcode)
   begin
     title, images = scrape_article(url)
   rescue => e
-    STDERR.puts "dl ERROR: #{e}"
+    STDERR.puts "dl ERROR: #{e}/#{url}"
     return false
   end
   return false if images.size == 0
@@ -200,16 +220,18 @@ def scrape_modelpage(url, pg)
     return '', [] if chk == false
 
     mname = get_modelname(@session)
+    #STDERR.puts "SCMOD: #{url} / #{pg}"
     ars0 = get_articles(@session)
   rescue => e
     STDERR.puts "SCRAPE MODELPAGE ERROR: #{e}/#{url}"
   end
 
+  #STDERR.puts "NARS0: #{ars0.size}"
   ars0.each do |ar|
     break if @narticle >= MAXARTICLES
     break if @nmodelpage >= MAXMODELARTICLES
 
-    #puts "AR: #{ar}"
+    #STDERR.puts "AR: #{ar}"
     if @db.exist_article?(ar) || ar =~ /video/
       #STDERR.puts "The Article is already exist: #{ar}"
     else
@@ -249,7 +271,7 @@ def scrape_collection(url, page)
 
   url2 = url.gsub('<PAGE>', page.to_s)
   cols = get_collection(url2, @session)
-  STDERR.puts "PAGE=#{page}, SIZE=#{cols.size}"
+  #STDERR.puts "PAGE=#{page}, SIZE=#{cols.size}"
   return models if cols.size == 0
 
   cols.each do |col|
@@ -292,7 +314,7 @@ def main
       break if @narticle >= MAXARTICLES
       @nmodelpage = 0
       mname, mcode, articles = scrape_modelpage(mo, 1)
-      STDERR.puts "MODELURL: #{mo}"
+      #STDERR.puts "MODELURL: #{mname} / #{mcode} / #{articles}"
       artist_id = @db.add_artist(mname, mcode, true)
       st = @db.enroll_artist(mname, mcode, true, @site_id, artist_id, mo)
       if artist_id != nil && st == true
