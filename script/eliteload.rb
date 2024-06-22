@@ -18,7 +18,7 @@ DEBUG = true
 TIMEOUT = 300
 MAXCOLPAGES = 2  # 一覧ページを何ページまで走査するかを指定
 #MAXMODELPAGES = 1
-MAXARTICLES = 20
+MAXARTICLES = 500
 MAXMODELARTICLES = 5
 RETRY = 20
 INFOFILE = '_info.txt'
@@ -38,7 +38,7 @@ def init
   end
 
   @db = EpTank.new($PARAM['database'])
-  @session = WebSession.new(WebSession::HEADLESS, $PARAM['chromprofile'])
+  @session = WebSession.new(WebSession::WITHSCR, $PARAM['chromprofile'])
   @tankdir = "#{$PARAM['eptank']['dir']}#{$PARAM['elite']['site']}/"
   @tmpdir = $PARAM['eptank']['tmpdir']
 
