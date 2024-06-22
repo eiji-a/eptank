@@ -234,7 +234,7 @@ class EpTank
     return rc, post_id
   end
 
-  def regist_article2(site_id, title, url, nimage, optinfo, artist_id)
+  def regist_article2(title, url, nimage, optinfo, act, site_id, artist_id)
     return if exist_article?(url)
     article_id = nil
     begin
@@ -243,7 +243,7 @@ class EpTank
         VALUES (?, ?, ?, ?, ?, ?, ?);
       SQL
       st = @db.prepare(sql)
-      st.execute(title, url, nimage, optinfo, true, site_id, artist_id)
+      st.execute(title, url, nimage, optinfo, act, site_id, artist_id)
       sql = <<-SQL
         SELECT LAST_INSERT_ID();
       SQL
@@ -304,6 +304,25 @@ class EpTank
       STDERR.puts "DB ERROR (ARTIST): #{e}" if DEBUG
     end
     return cnt == 1, act
+  end
+
+  def get_artist_by_url(site_id, url)
+    aid = nil
+    aname = ''
+    acode = ''
+    begin
+      @db.query(<<-SQL
+        SELECT artist_id, username, userid FROM enroll WHERE site_id = #{site_id} AND url = '#{url}';
+      SQL
+      ).each do |r|
+        aid = r[0]
+        aname = r[1]
+        acode = r[2]
+      end
+    rescue => e
+      STDERR.puts "DB ERROR (get_artist_by_url): #{e}/#{url}"
+    end
+    return aid, aname, acode
   end
 
   def get_artist_from_article(url)
@@ -483,15 +502,15 @@ class EpTank
     end  
   end
   
-  def regist_image2(filename, filesize, format, fingerprint, xreso, yreso, rating, article_id, artist_id, parent_id)
+  def regist_image2(filename, filesize, format, fingerprint, xreso, yreso, rating, act, article_id, artist_id, parent_id)
     image_id = nil
     begin
       sql = <<-SQL
         INSERT INTO image (filename, filesize, format, fingerprint, xreso, yreso, rating, active, article_id, artist_id, image_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, true, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       SQL
       st = @db.prepare(sql)
-      st.execute(filename, filesize, format, fingerprint, xreso, yreso, rating, article_id, artist_id, parent_id)
+      st.execute(filename, filesize, format, fingerprint, xreso, yreso, rating, act, article_id, artist_id, parent_id)
       sql = <<-SQL
         SELECT LAST_INSERT_ID();
       SQL
