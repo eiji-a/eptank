@@ -253,7 +253,7 @@ def scrape_modelpage(url, pg)
     break if @nmodelpage >= MAXMODELARTICLES
 
     #STDERR.puts "AR: #{ar}"
-    if @db.exist_article?(ar) || ar =~ /video/
+    if @db.exist_article?(ar)
       #STDERR.puts "The Article is already exist: #{ar}"
     else
       articles << ar
@@ -310,7 +310,7 @@ def scrape_collection(url, page)
 
   modellist = Array.new
   cols.each do |col|
-    next if col =~ /video/
+    #next if col =~ /video/
     aid, aurl = @db.get_artist_from_article(col)
     model = if aid == nil then
       STDERR.puts "NO EXIST: #{col}"
@@ -357,10 +357,16 @@ def main
     puts "NMODELS: #{models.size}"
 
     models.keys.shuffle.each do |mo|
-      break if @narticle >= MAXARTICLES
+      break if articles.size >= MAXARTICLES
       @nmodelpage = 0
-      articles, act = scrape_modelpage(mo, 1)
+      articles0, act = scrape_modelpage(mo, 1)
+      next if act == false
 
+      articles0.each do |ar|
+        break if articles.size >= MAXARTICLES
+        articles[ar] = mo
+      end
+=begin
       artist_id = models[mo][0]
       mname = models[mo][1]
       mcode = models[mo][2]
@@ -371,18 +377,19 @@ def main
         STDERR.print "ARTICLE(#{@narticle}/#{MAXARTICLES}): "
         st = download_article(ar, artist_id, mname, mcode)
       end
+=end
     end
 
-=begin
-    articles.each do |ar, mo|
-      STDERR.print "ARTICLE(#{articles.size}/#{MAXARTICLES}): "
-      next if mo[3] == false
-      artist_id = mo[0]
-      mname = mo[1]
-      mcode = mo[2]
+    articles.each.with_index(1) do |(ar, mo), i|
+      STDERR.print "ARTICLE(#{i}/#{MAXARTICLES}): "
+      model = models[mo]
+      next if model[3] == false
+      artist_id = model[0]
+      mname = model[1]
+      mcode = model[2]
       st = download_article(ar, artist_id, mname, mcode)
     end
-=end
+
     STDERR.puts "Loading is finished."
   rescue => e
     STDERR.puts "MAIN ERROR: #{e}"
