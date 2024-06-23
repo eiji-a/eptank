@@ -235,7 +235,9 @@ class EpTank
   end
 
   def regist_article2(title, url, nimage, optinfo, act, site_id, artist_id)
-    return if exist_article?(url)
+    STDERR.puts "regist_article2(1): #{url}/#{site_id}/#{artist_id}"
+    return nil if exist_article?(url)
+
     article_id = nil
     begin
       sql = <<-SQL
@@ -250,6 +252,7 @@ class EpTank
       @db.query(sql).each do |r|
         article_id = r[0] if r != nil
       end
+      @db.commit
     rescue StandardError => e
       STDERR.puts "ERROR regist_article2: #{e}"
       rollback
@@ -310,24 +313,27 @@ class EpTank
     aid = nil
     aname = ''
     acode = ''
+    act = false
     begin
       @db.query(<<-SQL
-        SELECT artist_id, username, userid FROM enroll WHERE site_id = #{site_id} AND url = '#{url}';
+        SELECT artist_id, username, userid, active FROM enroll WHERE site_id = #{site_id} AND url = '#{url}';
       SQL
       ).each do |r|
         aid = r[0]
         aname = r[1]
         acode = r[2]
+        act = r[3]
       end
     rescue => e
       STDERR.puts "DB ERROR (get_artist_by_url): #{e}/#{url}"
     end
-    return aid, aname, acode
+    return aid, aname, acode, act
   end
 
   def get_artist_from_article(url)
     aid = nil
     aurl = ''
+    STDERR.puts "get_artist_from_article:#{url}|"
     begin
       sql = <<-SQL
         SELECT enroll.artist_id, enroll.url FROM enroll, article
@@ -337,6 +343,7 @@ class EpTank
         aid = r[0]
         aurl = r[1]
       end
+      STDERR.puts "get_artist_from_article:#{aid}/#{aurl}"
     rescue => e
       STDERR.puts "DB ERROR (get_artist_from_article): #{e}"
     end

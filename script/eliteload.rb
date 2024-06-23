@@ -16,10 +16,10 @@ require_relative 'elitelib'
 USAGE = "eliteload.rb <YAML config> [help|<selection>]"
 DEBUG = true
 TIMEOUT = 300
-MAXCOLPAGES = 2  # 一覧ページを何ページまで走査するかを指定
+MAXCOLPAGES = 10  # 一覧ページを何ページまで走査するかを指定
 #MAXMODELPAGES = 1
-MAXARTICLES = 2
-MAXMODELARTICLES = 1
+MAXARTICLES = 50
+MAXMODELARTICLES = 10
 RETRY = 20
 INFOFILE = '_info.txt'
 
@@ -147,10 +147,10 @@ def create_cbz(mname, title, images)
 end
 
 def scrape_article(url)
+  @session.navigate(url, 2)
   #STDERR.puts "URL: #{url}/#{url.class}"
   images = []
   chk = check_tags(@session)
-  #return '', images if chk == false
   title, images = get_images(url, @session)
 
   return title, images, chk
@@ -162,8 +162,8 @@ def regist_article(url, artist_id, mname, title, act, imgsize)
   article_id
 end
 
-def regist_images(mname, cbzfile, imginfo, act, article_id, artist_id)
-  cbzpath = "#{$PARAM['elite']['site']}/#{mname}/"
+def regist_images(modelname, cbzfile, imginfo, act, article_id, artist_id)
+  cbzpath = "#{$PARAM['elite']['site']}/#{modelname}/"
   tankdir = "#{$PARAM['eptank']['dir']}"
   #regdir = "#{$PARAM['elite']['site']}/#{mname}/"
   begin
@@ -199,7 +199,6 @@ def download_article(url, artist_id, mname, mcode)
   end
 
   if images[0] =~ /javascript/ || images.size < 5 
-    STDERR.puts "IMGVDO: #{images}"
     images = Array.new
     act = false
   end
@@ -207,16 +206,18 @@ def download_article(url, artist_id, mname, mcode)
   article_id = regist_article(url, artist_id, mname, title, act, images.size)
   if act == true
     cbzfile, imginfo = create_cbz(modelname, title, images)
-    regist_images(mname, cbzfile, imginfo, act, article_id, artist_id)
+    regist_images(modelname, cbzfile, imginfo, act, article_id, artist_id)
     STDERR.puts "#{mname}:#{artist_id} (#{imginfo.size} images): #{title}"
+  else
+    STDERR.puts "#{mname}:#{artist_id}: The article is NOT ACTIVE."
   end
 
   act
 end
 
 def scrape_modelinfo(url)
-  mcode = url.split("/")[-1]
   @session.navigate(url, 2)
+  mcode = url.split("/")[-1]
   mname = ''
   chk = false
   begin
@@ -249,7 +250,7 @@ def scrape_modelpage(url, pg)
 
   #STDERR.puts "NARS0: #{ars0.size}"
   ars0.each do |ar|
-    break if @narticle >= MAXARTICLES
+    #break if @narticle >= MAXARTICLES
     break if @nmodelpage >= MAXMODELARTICLES
 
     #STDERR.puts "AR: #{ar}"
@@ -257,13 +258,13 @@ def scrape_modelpage(url, pg)
       #STDERR.puts "The Article is already exist: #{ar}"
     else
       articles << ar
-      @narticle += 1
+      #@narticle += 1
       @nmodelpage += 1
     end
   end
 
   articles2 = Array.new
-  if @narticle < MAXARTICLES
+  if articles.size < MAXARTICLES
     begin
       ele = @session.element('//*[@id="content"]/nav/ul/li[3]', 0)
       articles2, chk2 = scrape_modelpage(url, pg + 1) if ele != nil
@@ -283,14 +284,14 @@ def scrape_models(url, page)
   modellist = get_models(url2, @session)
   modellist.map do |mo|
     if models[mo] == nil
-      artist_id, mname, mcode = @db.get_artist_by_url(@site_id, mo)
+      artist_id, mname, mcode, act = @db.get_artist_by_url(@site_id, mo)
       if artist_id == nil
         mname, mcode, act = scrape_modelinfo(mo)
         artist_id = @db.add_artist(mname, mcode, act)
         st = @db.enroll_artist(mname, mcode, act, @site_id, artist_id, mo)
         @db.commit if artist_id != nil && st == true
       end
-      models[mo] = [artist_id, mname, mcode, act]
+      models[mo] = [artist_id, mname, mcode, act] if act == true
     end
   end
   nextmodels, _articles = scrape_models(url, page + 1)
@@ -310,11 +311,14 @@ def scrape_collection(url, page)
 
   modellist = Array.new
   cols.each do |col|
+    break if articles.size >= MAXARTICLES
     #next if col =~ /video/
     aid, aurl = @db.get_artist_from_article(col)
     model = if aid == nil then
       STDERR.puts "NO EXIST: #{col}"
-      get_modelinfo(col, @session)
+      mo = get_modelinfo(col, @session)
+      articles[col] = mo
+      mo
     else
       #STDERR.puts "USE ENROLL!: #{aurl}"
       aurl
@@ -335,16 +339,18 @@ def scrape_collection(url, page)
     end
   end
 
-  nextmodels, nextarticles = scrape_collection(url, page + 1)
+  nextmodels = Hash.new
+  nextarticles = Hash.new
+  nextmodels, nextarticles = scrape_collection(url, page + 1) if articles.size < MAXARTICLES
 
   return models.merge(nextmodels), articles.merge(nextarticles)
 end
 
 def main
   option = init
-  @narticle = 0
+  #@narticle = 0
   begin
-    #STDERR.puts("scrape_collection: #{@select}")
+    STDERR.puts("SELECTION: #{@select}")
     models, articles = case @select 
       when /^models/
         scrape_models(@site_url + @select, 1)
@@ -354,10 +360,11 @@ def main
         scrape_collection(@site_url + @select, 1)
       end
 
-    puts "NMODELS: #{models.size}"
+    STDERR.puts "NMODELS: #{models.size}"
 
     models.keys.shuffle.each do |mo|
       break if articles.size >= MAXARTICLES
+      #STDERR.puts "MOD: #{models[mo][1]} / #{articles.size}"
       @nmodelpage = 0
       articles0, act = scrape_modelpage(mo, 1)
       next if act == false
@@ -366,18 +373,6 @@ def main
         break if articles.size >= MAXARTICLES
         articles[ar] = mo
       end
-=begin
-      artist_id = models[mo][0]
-      mname = models[mo][1]
-      mcode = models[mo][2]
-      modelname = "#{mname}(#{mcode})"
-      STDERR.puts "ARTIST: #{artist_id} / #{modelname}"
-      STDERR.puts "ART: #{articles}"
-      articles.each do |ar|
-        STDERR.print "ARTICLE(#{@narticle}/#{MAXARTICLES}): "
-        st = download_article(ar, artist_id, mname, mcode)
-      end
-=end
     end
 
     articles.each.with_index(1) do |(ar, mo), i|

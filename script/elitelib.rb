@@ -5,7 +5,7 @@
 
 
 def get_images(url, session)
-  session.navigate(url, 3)
+  #session.navigate(url, 3)
 
   title = "NO TITLE"
   image_urls = Array.new
@@ -102,7 +102,7 @@ def check_tags(session)
     return false if el.text == 'Ebony'
   end
   begin
-    elems = session.elements('//*[@id="content"]/p[2]/a[2]', 0)
+    elems = session.elements('//*[@id="content"]/p[1]/a', 0)
   rescue => e
     STDERR.puts "check_tags(2): #{e}"
   end
