@@ -51,12 +51,33 @@ def get_modelinfo(url, session)
   model = ''
   session.navigate(url, 1)
   begin
-    elem = session.element('//*[@id="content"]/p[2]/a[2]', 0)
-    model = elem.attribute('href')
+    elems = session.elements('//*[@id="content"]/p[2]/a', 0)
+    elems.each do |el|
+      mlink = el.attribute('href')
+      if mlink =~ /model/
+        model = mlink
+        break
+      end
+    end
   rescue => e
-    elem = session.element('//*[@id="content"]/p[1]/a[2]', 0)
-    model = elem.attribute('href')
+    #
   end
+  return model if model != ''
+  
+  begin
+    elems = session.elements('//*[@id="content"]/p[1]/a', 0)
+    elems.each do |el|
+      mlink = el.attribute('href')
+      if mlink =~ /model/
+        model = mlink
+        break
+      end
+    end
+  rescue => e
+    # no model information
+  end
+
+  #STDERR.puts "MODELINFO: get_modelinfo: #{model}"
   model
 end
 
@@ -116,6 +137,8 @@ def get_modelname(session)
   name = ""
   begin
     name = session.text('//*[@id="content"]/article/header/h1', 0)
+  rescue
+    # 
   end
   name
 end
