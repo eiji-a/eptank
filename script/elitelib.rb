@@ -12,7 +12,10 @@ def get_images(url, session)
   begin
     isvideo = session.element('/html/body', 0).attribute('class')
     '/html/head/title'
-    return '', [] if isvideo == 'page-video'
+    if isvideo == 'page-video'
+      t = session.text('//*[@id="root"]/section[1]/main/header/h1', 0)
+      return t, [], false
+    end
     title = session.text('//*[@id="top"]/h1', 0)
     #title = session.element("/html/head/title", 3).text
   rescue => e
@@ -28,7 +31,7 @@ def get_images(url, session)
     STDERR.puts "get_images: images: #{e}"
   end
 
-  return title, image_urls
+  return title, image_urls, true
 end
 
 def get_articles(session)
@@ -63,7 +66,7 @@ def get_modelinfo(url, session)
     #
   end
   return model if model != ''
-  
+
   begin
     elems = session.elements('//*[@id="content"]/p[1]/a', 0)
     elems.each do |el|
@@ -76,6 +79,10 @@ def get_modelinfo(url, session)
   rescue => e
     # no model information
   end
+
+  # XEROTICA link
+  #//*[@id="root"]/section[1]/main/header/ul/li[1]/a
+  #//*[@id="root"]/section[1]/main/header/ul/li[1]/a
 
   #STDERR.puts "MODELINFO: get_modelinfo: #{model}"
   model

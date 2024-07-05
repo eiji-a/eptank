@@ -16,12 +16,13 @@ require_relative 'elitelib'
 USAGE = "eliteload.rb <YAML config> [help|<selection>]"
 DEBUG = true
 TIMEOUT = 300
-MAXCOLPAGES = 2  # 一覧ページを何ページまで走査するかを指定
+MAXCOLPAGES = 4  # 一覧ページを何ページまで走査するかを指定
 #MAXMODELPAGES = 1
-MAXARTICLES = 5
-MAXMODELARTICLES = 1
+MAXARTICLES = 50
+MAXMODELARTICLES = 5
 RETRY = 20
 INFOFILE = '_info.txt'
+NOMODELINFO = 'NOMODELINFO'
 
 def init
   if ARGV.size < 1 || ARGV.size > 2
@@ -156,9 +157,9 @@ def scrape_article(url)
   return title, images, chk
 end
 
-def regist_article(url, artist_id, mname, title, act, imgsize)
+def regist_article(url, artist_id, title, act, imgsize)
   article_id = @db.regist_article2(title, url, imgsize, '', act, @site_id, artist_id)
-  raise StandardError.new("Can't regist article (#{url})") if article_id == nil
+  STDERR.puts "REGIST ARTICLE: Can't regist article (#{url})" if article_id == nil
   article_id
 end
 
@@ -203,13 +204,14 @@ def download_article(url, artist_id, mname, mcode, mact)
     act = false
   end
 
-  article_id = regist_article(url, artist_id, mname, title, act, images.size)
-  if mact == true && act == true
+  article_id = regist_article(url, artist_id, title, act, images.size)
+  if mact == true && act == true && article_id != nil
     cbzfile, imginfo = create_cbz(modelname, title, images)
     regist_images(modelname, cbzfile, imginfo, act, article_id, artist_id)
     STDERR.puts "#{mname}:#{artist_id} (#{imginfo.size} images): #{title}"
   else
-    STDERR.puts "#{mname}:#{artist_id}: The article is NOT ACTIVE."
+    STDERR.puts "#{mname}:#{artist_id}: The article is NOT ACTIVE or ALREADY DOWNLOADED."
+    act = false
   end
 
   act
@@ -314,26 +316,27 @@ def scrape_collection(url, page)
   cols = get_collection(url2, @session)
   return Array.new, Hash.new if cols.size == 0
 
-  modellist = Array.new
+  modellist = Hash.new
   articles  = Hash.new
   cols.each do |col|
     break if @narticle >= MAXARTICLES
 
-    aid, aurl = @db.get_artist_from_article(col)
-    model = if aid == nil then
+    eid, eurl, aurl = @db.get_artist_from_article(col)
+    model = if eurl != nil then
+      eurl
+    elsif aurl != nil then
+      NOMODELINFO
+    else
       STDERR.puts "NO EXIST: #{col}"
       mo = get_modelinfo(col, @session)
-      articles[col] = mo if mo != ''
+      articles[col] = if mo != '' then mo else NOMODELINFO end
       @narticle += 1
-      mo
-    else
-      #STDERR.puts "USE ENROLL!: #{aurl}"
-      aurl
+      if mo != '' then mo else NOMODELINFO end
     end
-    modellist << model if mo != ''
+    modellist[model] = true if model != NOMODELINFO
   end
 
-  models = modellist
+  models = modellist.keys
 
   nextmodels = Array.new
   nextarticles = Hash.new
@@ -363,11 +366,15 @@ def main
     models.shuffle.each do |mo|
       break if articles.size >= MAXARTICLES
       #STDERR.puts "MOD: #{models[mo][1]} / #{articles.size}"
-      if modelinfo[mo] == nil
-        artist_id, mname, mcode, act = get_model(mo)
-        modelinfo[mo] = [artist_id, mname, mcode, act] if act == true
-      end  
-      next if modelinfo[mo] == nil
+      begin
+        if modelinfo[mo] == nil
+          artist_id, mname, mcode, act = get_model(mo)
+          modelinfo[mo] = [artist_id, mname, mcode, act] if act == true
+        end  
+        next if modelinfo[mo] == nil
+      rescue => e
+        STDERR.puts "ERROR scrape_modelpage: #{e}/#{mo}"
+      end
 
       @nmodelpage = 0
       articles0, act = scrape_modelpage(mo, 1)
@@ -383,6 +390,10 @@ def main
 
     articles.each.with_index(1) do |(ar, mo), i|
       STDERR.print "ARTICLE(#{i}/#{MAXARTICLES}): "
+      if mo == NOMODELINFO
+        st = download_article(ar, nil, nil, nil, false)
+        next
+      end
       if modelinfo[mo] == nil
         artist_id, mname, mcode, act = get_model(mo)
         modelinfo[mo] = [artist_id, mname, mcode, act] # if act == true

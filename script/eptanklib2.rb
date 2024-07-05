@@ -331,23 +331,32 @@ class EpTank
   end
 
   def get_artist_from_article(url)
-    aid = nil
-    aurl = ''
+    eid = nil
+    eurl = nil
+    aurl = nil
     #STDERR.puts "get_artist_from_article:#{url}|"
     begin
+=begin
       sql = <<-SQL
         SELECT enroll.artist_id, enroll.url FROM enroll, article
         WHERE article.url = '#{url}' AND enroll.artist_id = article.artist_id AND enroll.site_id = article.site_id;
       SQL
+=end
+      sql = <<-SQL
+        SELECT enroll.artist_id, enroll.url, article.url FROM article LEFT OUTER JOIN enroll
+            ON article.site_id = enroll.site_id AND article.artist_id = enroll.artist_id
+         WHERE article.url = '#{url}';
+      SQL
       @db.query(sql).each do |r|
-        aid = r[0].to_i
-        aurl = r[1]
+        eid = if r[0] != nil then r[0].to_i else nil end
+        eurl = r[1]
+        aurl = r[2]
       end
       #STDERR.puts "get_artist_from_article:#{aid}/#{aurl}" if aid == 53
     rescue => e
       STDERR.puts "DB ERROR (get_artist_from_article): #{e}"
     end
-    return aid, aurl
+    return eid, eurl, aurl
   end
 
   def update_artists(diff_artists)
