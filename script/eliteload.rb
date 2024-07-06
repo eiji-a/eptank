@@ -18,7 +18,7 @@ DEBUG = true
 TIMEOUT = 300
 MAXCOLPAGES = 4  # 一覧ページを何ページまで走査するかを指定
 #MAXMODELPAGES = 1
-MAXARTICLES = 50
+MAXARTICLES = 100
 MAXMODELARTICLES = 5
 RETRY = 20
 INFOFILE = '_info.txt'
@@ -287,7 +287,7 @@ def get_model(url)
     mname.gsub!(/'/, "''")
     #STDERR.puts "MODEL: #{mname}/#{mcode}/#{act}"
     if mname != ''
-      artist_id = @db.add_artist(mname, mcode, act)
+      artist_id = @db.add_artist(mname, act)
       st = @db.enroll_artist(mname, mcode, act, @site_id, artist_id, url)
       @db.commit if artist_id != nil && st == true
     end

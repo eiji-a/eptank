@@ -368,14 +368,16 @@ class EpTank
           if v == nil
             STDERR.puts "ARTIST DELETE: #{k}"
             sql = <<-SQL
-              UPDATE enroll SET active = false WHERE userid = ?;
+              UPDATE enroll SET active = false
+              WHERE userid = ?;
             SQL
             st = @db.prepare(sql)
             st.execute(k)
             @db.commit
           else
             sql = <<-SQL
-              UPDATE enroll SET active = true WHERE userid = ?;
+              UPDATE enroll SET active = true
+              WHERE userid = ?;
             SQL
             st = @db.prepare(sql)
             st.execute(k)
@@ -391,7 +393,8 @@ class EpTank
             st.execute(v)
   
             sql = <<-SQL
-              SELECT id FROM artist WHERE name = '#{v}';
+              SELECT id FROM artist
+              WHERE name = '#{v}';
             SQL
             id = 0
             @db.query(sql).each do |i|
@@ -424,7 +427,8 @@ class EpTank
     stat = false
     begin
       @db.query(<<-SQL
-        SELECT site_id, artist_id FROM enroll WHERE site_id = #{site_id} AND artist_id = #{artist_id};
+        SELECT site_id, artist_id FROM enroll
+        WHERE site_id = #{site_id} AND artist_id = #{artist_id};
       SQL
       ).each do |r|
         #STDERR.puts "ENROLL ENTRY: #{r}"
@@ -459,18 +463,20 @@ class EpTank
     act = false if act != true
     begin
       @db.query(<<-SQL
-        SELECT id FROM artist WHERE name = '#{mname}(#{mcode})';
+        SELECT id FROM artist
+        WHERE name = '#{mname}' OR name LIKE '#{mname}(%)';
       SQL
       ).each do |r|
         aid = r[0]
       end
+
       if aid == nil  # アーティストが未登録
         sql = <<-SQL
           INSERT INTO artist (name, rating, active)
           VALUES (?, ?, ?);
         SQL
         st = @db.prepare(sql)
-        st.execute("#{mname}(#{mcode})", 0, act)
+        st.execute("#{mname}", 0, act)
         sql = <<-SQL
           SELECT LAST_INSERT_ID();
         SQL
@@ -487,7 +493,8 @@ class EpTank
   def regist_image(filename, format, post_id, artist_id)
     begin
       sql = <<-SQL
-        SELECT article.id FROM article WHERE article.url = ?;
+        SELECT article.id FROM article
+        WHERE article.url = ?;
       SQL
       pid = nil
       st = @db.prepare(sql)
